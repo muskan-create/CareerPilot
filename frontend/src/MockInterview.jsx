@@ -6,18 +6,14 @@ function MockInterview() {
   const [started, setStarted] = useState(false)
   const [currentQuestion, setCurrentQuestion] = useState(0)
   const [answer, setAnswer] = useState('')
-
   const [showFeedback, setShowFeedback] = useState(false)
   const [score, setScore] = useState(0)
   const [feedback, setFeedback] = useState('')
   const [questionScores, setQuestionScores] = useState([])
+  const [interviewAnswers, setInterviewAnswers] = useState([])
   const [showResult, setShowResult] = useState(false)
   const [completedScore, setCompletedScore] = useState(0)
-
-  const [interviewCount, setInterviewCount] = useState(() => {
-    const savedCount = localStorage.getItem('mockInterviewCount')
-    return savedCount ? Number(savedCount) : 0
-  })
+  const [interviewCount, setInterviewCount] = useState(0)
 
   const questions = {
     HR: [
@@ -122,7 +118,9 @@ function MockInterview() {
   useEffect(() => {
     async function loadMockInterviews() {
       try {
-        const token = localStorage.getItem('careerPilotToken')
+        const token = localStorage.getItem(
+          'careerPilotToken'
+        )
 
         if (!token) {
           return
@@ -140,13 +138,8 @@ function MockInterview() {
         const data = await response.json()
 
         if (response.ok) {
-          const count = (data.mockInterviews || []).length
-
-          setInterviewCount(count)
-
-          localStorage.setItem(
-            'mockInterviewCount',
-            count
+          setInterviewCount(
+            (data.mockInterviews || []).length
           )
         }
       } catch (error) {
@@ -161,8 +154,14 @@ function MockInterview() {
   }, [])
 
   function calculateScore(userAnswer) {
-    const cleanAnswer = userAnswer.trim().toLowerCase()
-    const words = cleanAnswer.split(/\s+/).filter(Boolean)
+    const cleanAnswer =
+      userAnswer.trim().toLowerCase()
+
+    const words =
+      cleanAnswer
+        .split(/\s+/)
+        .filter(Boolean)
+
     const wordCount = words.length
 
     const currentQuestionText =
@@ -171,14 +170,19 @@ function MockInterview() {
     const questionKeywords =
       keywords[currentQuestionText] || []
 
-    const matchedKeywords = questionKeywords.filter(keyword =>
-      cleanAnswer.includes(keyword)
-    )
+    const matchedKeywords =
+      questionKeywords.filter(
+        keyword =>
+          cleanAnswer.includes(keyword)
+      )
 
     const keywordScore =
       questionKeywords.length === 0
         ? 0
-        : (matchedKeywords.length / questionKeywords.length) * 40
+        : (
+            matchedKeywords.length /
+            questionKeywords.length
+          ) * 40
 
     const lengthScore =
       wordCount < 5
@@ -249,10 +253,10 @@ function MockInterview() {
       return
     }
 
-    const currentScore = calculateScore(answer)
+    const currentScore =
+      calculateScore(answer)
 
     setScore(currentScore)
-
     setFeedback(
       getFeedback(currentScore)
     )
@@ -269,16 +273,16 @@ function MockInterview() {
 
   async function saveInterviewToMongoDB(
     finalScore,
-    finalQuestion,
-    finalAnswer,
-    finalQuestionScore
+    completeQuestions
   ) {
     try {
-      const token = localStorage.getItem('careerPilotToken')
+      const token = localStorage.getItem(
+        'careerPilotToken'
+      )
 
       if (!token) {
         console.log('No login token found.')
-        return
+        return false
       }
 
       const response = await fetch(
@@ -291,10 +295,8 @@ function MockInterview() {
           },
           body: JSON.stringify({
             role: interviewType,
-            question: finalQuestion,
-            answer: finalAnswer,
-            score: finalQuestionScore,
-            feedback: getFeedback(finalQuestionScore)
+            questions: completeQuestions,
+            finalScore
           })
         }
       )
@@ -306,101 +308,99 @@ function MockInterview() {
           'Unable to save interview:',
           data.message
         )
-        return
+        return false
       }
 
       console.log(
-        'Mock interview saved to MongoDB successfully'
+        'Complete mock interview saved to MongoDB successfully'
       )
 
-      console.log(
-        'MongoDB interview records:',
-        data.mockInterviews
-      )
+      return true
     } catch (error) {
       console.log(
         'Unable to save mock interview:',
         error.message
       )
+
+      return false
     }
   }
 
   async function nextQuestion() {
+    const currentQuestionText =
+      questions[interviewType][currentQuestion]
+
+    const currentQuestionData = {
+      question: currentQuestionText,
+      answer,
+      score,
+      feedback: getFeedback(score)
+    }
+
+    const completeQuestions = [
+      ...interviewAnswers,
+      currentQuestionData
+    ]
+
+    const updatedQuestionScores = [
+      ...questionScores,
+      score
+    ]
+
     if (
       currentQuestion <
       questions[interviewType].length - 1
     ) {
+      setInterviewAnswers(
+        completeQuestions
+      )
+
+      setQuestionScores(
+        updatedQuestionScores
+      )
+
       setCurrentQuestion(
         currentQuestion + 1
       )
 
       setAnswer('')
       setShowFeedback(false)
+      setScore(0)
+      setFeedback('')
     } else {
-      const finalScores = [
-        ...questionScores,
-        score
-      ]
-
       const finalScore = Math.round(
-        finalScores.reduce(
-          (total, value) => total + value,
+        updatedQuestionScores.reduce(
+          (total, value) =>
+            total + value,
           0
-        ) / finalScores.length
+        ) /
+          updatedQuestionScores.length
       )
 
-      const newCount = interviewCount + 1
+      const saved =
+        await saveInterviewToMongoDB(
+          finalScore,
+          completeQuestions
+        )
+
+      if (!saved) {
+        alert(
+          'Interview could not be saved. Please try again.'
+        )
+        return
+      }
+
+      const newCount =
+        interviewCount + 1
 
       setInterviewCount(newCount)
       setCompletedScore(finalScore)
-
-      localStorage.setItem(
-        'mockInterviewCount',
-        newCount
+      setInterviewAnswers(
+        completeQuestions
       )
-
-      localStorage.setItem(
-        'lastInterviewScore',
-        finalScore
+      setQuestionScores(
+        updatedQuestionScores
       )
-
-      const savedResults =
-        localStorage.getItem('mockInterviewResults')
-
-      let previousResults = []
-
-      if (savedResults) {
-        try {
-          previousResults = JSON.parse(savedResults)
-        } catch {
-          previousResults = []
-        }
-      }
-
-      const newResult = {
-        type: interviewType,
-        score: finalScore,
-        date: new Date().toLocaleDateString()
-      }
-
-      localStorage.setItem(
-        'mockInterviewResults',
-        JSON.stringify([
-          ...previousResults,
-          newResult
-        ])
-      )
-
-      const finalQuestion =
-        questions[interviewType][currentQuestion]
-
-      await saveInterviewToMongoDB(
-        finalScore,
-        finalQuestion,
-        answer,
-        score
-      )
-
       setShowFeedback(false)
       setShowResult(true)
     }
@@ -412,6 +412,7 @@ function MockInterview() {
     setCurrentQuestion(0)
     setAnswer('')
     setQuestionScores([])
+    setInterviewAnswers([])
     setScore(0)
     setFeedback('')
     setCompletedScore(0)
@@ -457,7 +458,9 @@ function MockInterview() {
                     ? 'interview-option active'
                     : 'interview-option'
                 }
-                onClick={() => setInterviewType('HR')}
+                onClick={() =>
+                  setInterviewType('HR')
+                }
               >
                 👤 HR Interview
               </button>
@@ -468,7 +471,11 @@ function MockInterview() {
                     ? 'interview-option active'
                     : 'interview-option'
                 }
-                onClick={() => setInterviewType('Technical')}
+                onClick={() =>
+                  setInterviewType(
+                    'Technical'
+                  )
+                }
               >
                 💻 Technical Interview
               </button>
@@ -479,7 +486,9 @@ function MockInterview() {
                     ? 'interview-option active'
                     : 'interview-option'
                 }
-                onClick={() => setInterviewType('Mixed')}
+                onClick={() =>
+                  setInterviewType('Mixed')
+                }
               >
                 🎯 Mixed Interview
               </button>
@@ -504,6 +513,7 @@ function MockInterview() {
                 setShowResult(false)
                 setCurrentQuestion(0)
                 setQuestionScores([])
+                setInterviewAnswers([])
                 setAnswer('')
                 setShowFeedback(false)
                 setScore(0)
@@ -540,7 +550,8 @@ function MockInterview() {
 
             {!showResult && (
               <p>
-                Question {currentQuestion + 1} of {questions[interviewType].length}
+                Question {currentQuestion + 1} of{' '}
+                {questions[interviewType].length}
               </p>
             )}
 
@@ -569,7 +580,9 @@ function MockInterview() {
                   </p>
 
                   <p>
-                    You completed all {questions[interviewType].length} questions.
+                    You completed all{' '}
+                    {questions[interviewType].length}{' '}
+                    questions.
                   </p>
 
                   <p>
@@ -595,7 +608,9 @@ function MockInterview() {
 
                 <textarea
                   value={answer}
-                  onChange={(e) => setAnswer(e.target.value)}
+                  onChange={e =>
+                    setAnswer(e.target.value)
+                  }
                   placeholder="Type your answer here..."
                   rows="7"
                 />
@@ -631,13 +646,13 @@ function MockInterview() {
                   className="start-interview-btn"
                   onClick={nextQuestion}
                 >
-                  {currentQuestion === questions[interviewType].length - 1
+                  {currentQuestion ===
+                  questions[interviewType].length - 1
                     ? 'Finish Interview ✓'
                     : 'Next Question →'}
                 </button>
 
               </>
-
             )}
 
           </div>

@@ -6,91 +6,121 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+
     email: {
       type: String,
       required: true,
       unique: true
     },
+
     password: {
       type: String,
       required: true
     },
+
     college: {
       type: String,
       default: ''
     },
+
     degree: {
       type: String,
       default: ''
     },
+
     graduationYear: {
       type: String,
       default: ''
     },
+
     skills: {
       type: String,
       default: ''
     },
+
     github: {
       type: String,
       default: ''
     },
+
     linkedin: {
       type: String,
       default: ''
     },
+
     careerGoal: {
       type: String,
       default: ''
     },
-   mockInterviews: {
-  type: [
-    {
-      role: String,
-      questions: [
+
+    mockInterviews: {
+      type: [
         {
-          question: String,
-          answer: String,
-          score: Number,
-          feedback: String
+          role: String,
+          questions: [
+            {
+              question: String,
+              answer: String,
+              score: Number,
+              feedback: String
+            }
+          ],
+          finalScore: Number,
+          createdAt: {
+            type: Date,
+            default: Date.now
+          }
         }
       ],
-      finalScore: Number,
-      createdAt: {
-        type: Date,
-        default: Date.now
-      }
-    }
-  ],
-  default: []
-},
+      default: []
+    },
+
     resumeScore: {
       type: Number,
       default: 0
     },
+
     dsaProblems: {
-  type: [
-    {
-      id: Number,
-      name: String,
-      difficulty: String,
-      topic: String,
-      solved: Boolean
-    }
-  ],
-  default: []
-},
+      type: [
+        {
+          id: Number,
+          name: String,
+          difficulty: String,
+          topic: String,
+          solved: Boolean
+        }
+      ],
+      default: []
+    },
+
     resumeText: {
       type: String,
       default: ''
     },
+
     selectedRole: {
       type: String,
       default: ''
     },
+
     roleMatchPercentage: {
       type: Number,
       default: 0
+    },
+
+    jobPreferences: {
+      jobRole: {
+        type: String,
+        default: ''
+      },
+      location: {
+        type: String,
+        default: ''
+      },
+      jobType: {
+        type: String,
+        default: ''
+      }
     }
   },
   {

@@ -1,14 +1,123 @@
+import { useEffect, useState } from 'react'
 import './JobRecommendations.css'
 
 function JobRecommendations() {
-  const savedProfile = localStorage.getItem('careerPilotProfile')
+ const [profile, setProfile] = useState({
+  careerGoal: '',
+  skills: '',
+  resumeText: ''
+})
+  const [preferences, setPreferences] = useState({
+    jobRole: '',
+    location: '',
+    jobType: ''
+  })
 
-  const profile = savedProfile
-    ? JSON.parse(savedProfile)
-    : {
-        careerGoal: 'Software Developer',
-        skills: ''
+  const [loading, setLoading] = useState(true)
+  const [saving, setSaving] = useState(false)
+  const [message, setMessage] = useState('')
+
+  const token = localStorage.getItem('careerPilotToken')
+
+  useEffect(() => {
+    async function loadData() {
+      if (!token) {
+        setLoading(false)
+        return
       }
+
+      try {
+        const profileResponse = await fetch(
+          'http://127.0.0.1:5000/api/auth/profile',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        )
+
+        const profileData = await profileResponse.json()
+
+        if (profileResponse.ok && profileData.user) {
+          setProfile({
+  careerGoal: profileData.user.careerGoal || '',
+  skills: profileData.user.skills || '',
+  resumeText: profileData.user.resumeText || ''
+})
+        }
+
+        const preferencesResponse = await fetch(
+          'http://127.0.0.1:5000/api/auth/job-preferences',
+          {
+            headers: {
+              Authorization: `Bearer ${token}`
+            }
+          }
+        )
+
+        const preferencesData =
+          await preferencesResponse.json()
+
+        if (
+          preferencesResponse.ok &&
+          preferencesData.jobPreferences
+        ) {
+          setPreferences({
+            jobRole:
+              preferencesData.jobPreferences.jobRole || '',
+            location:
+              preferencesData.jobPreferences.location || '',
+            jobType:
+              preferencesData.jobPreferences.jobType || ''
+          })
+        }
+      } catch (error) {
+        console.log('Job data loading error:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [token])
+
+  const savePreferences = async () => {
+    if (!token) {
+      setMessage('Please login first.')
+      return
+    }
+
+    setSaving(true)
+    setMessage('')
+
+    try {
+      const response = await fetch(
+        'http://127.0.0.1:5000/api/auth/job-preferences',
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify(preferences)
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setMessage(data.message || 'Unable to save preferences.')
+        return
+      }
+
+      setMessage('Job preferences saved successfully.')
+    } catch (error) {
+      console.log('Job preferences save error:', error)
+      setMessage('Unable to connect to server.')
+    } finally {
+      setSaving(false)
+    }
+  }
 
   const profileSkills = profile.skills
     ? profile.skills
@@ -17,8 +126,7 @@ function JobRecommendations() {
         .filter(Boolean)
     : []
 
-  const savedResumeText =
-    localStorage.getItem('resumeText') || ''
+  const savedResumeText = profile.resumeText || ''
 
   const resumeSkillsList = [
     'HTML',
@@ -108,7 +216,11 @@ function JobRecommendations() {
       (matchedSkills.length / job.skills.length) * 100
 
     const goal =
-      (profile.careerGoal || '').toLowerCase()
+      (
+        preferences.jobRole ||
+        profile.careerGoal ||
+        ''
+      ).toLowerCase()
 
     const jobTitle =
       job.title.toLowerCase()
@@ -125,9 +237,56 @@ function JobRecommendations() {
       goalMatch = 100
     }
 
+    let locationMatch = 0
+
+    if (
+      preferences.location &&
+      job.location.toLowerCase() ===
+        preferences.location.toLowerCase()
+    ) {
+      locationMatch = 100
+    }
+
     return Math.round(
-      (skillMatch * 0.7) +
-      (goalMatch * 0.3)
+      (skillMatch * 0.6) +
+      (goalMatch * 0.25) +
+      (locationMatch * 0.15)
+    )
+  }
+
+  const filteredJobs = jobs.filter(job => {
+    const role =
+      preferences.jobRole.trim().toLowerCase()
+
+    const location =
+      preferences.location.trim().toLowerCase()
+
+    const jobType =
+      preferences.jobType.trim().toLowerCase()
+
+    const roleMatch =
+      !role ||
+      job.title.toLowerCase().includes(role) ||
+      role.includes(job.title.toLowerCase())
+
+    const locationMatch =
+      !location ||
+      job.location.toLowerCase() === location
+
+    const typeMatch =
+      !jobType ||
+      job.type.toLowerCase() === jobType
+
+    return roleMatch && locationMatch && typeMatch
+  })
+
+  if (loading) {
+    return (
+      <div className="jobs-page">
+        <div className="jobs-container">
+          <h2>Loading Job Recommendations...</h2>
+        </div>
+      </div>
     )
   }
 
@@ -160,7 +319,7 @@ function JobRecommendations() {
               <p>Your Career Goal</p>
 
               <h3>
-                {profile.careerGoal || 'Software Developer'}
+                {profile.careerGoal || 'Not added yet'}
               </h3>
             </div>
           </div>
@@ -195,86 +354,210 @@ function JobRecommendations() {
 
         </div>
 
+        <div className="job-preferences-card">
+
+          <div className="section-heading">
+            <p>JOB PREFERENCES</p>
+
+            <h2>
+              Find Your Preferred Jobs
+            </h2>
+
+            <span>
+              Select your preferred role, location and job type.
+            </span>
+          </div>
+
+          <div className="job-preferences-form">
+
+            <div>
+              <label>
+                Job Role
+              </label>
+
+              <input
+                type="text"
+                value={preferences.jobRole}
+                onChange={e =>
+                  setPreferences({
+                    ...preferences,
+                    jobRole: e.target.value
+                  })
+                }
+                placeholder="e.g. Software Developer"
+              />
+            </div>
+
+            <div>
+              <label>
+                Location
+              </label>
+
+              <select
+                value={preferences.location}
+                onChange={e =>
+                  setPreferences({
+                    ...preferences,
+                    location: e.target.value
+                  })
+                }
+              >
+                <option value="">
+                  All Locations
+                </option>
+                <option value="Gurgaon">
+                  Gurgaon
+                </option>
+                <option value="Noida">
+                  Noida
+                </option>
+                <option value="Delhi">
+                  Delhi
+                </option>
+              </select>
+            </div>
+
+            <div>
+              <label>
+                Job Type
+              </label>
+
+              <select
+                value={preferences.jobType}
+                onChange={e =>
+                  setPreferences({
+                    ...preferences,
+                    jobType: e.target.value
+                  })
+                }
+              >
+                <option value="">
+                  All Types
+                </option>
+                <option value="Full Time">
+                  Full Time
+                </option>
+                <option value="Internship">
+                  Internship
+                </option>
+              </select>
+            </div>
+
+          </div>
+
+          <button
+            type="button"
+            onClick={savePreferences}
+            className="save-preferences-btn"
+            disabled={saving}
+          >
+            {saving
+              ? 'Saving...'
+              : 'Save Preferences'}
+          </button>
+
+          {message && (
+            <p className="job-preference-message">
+              {message}
+            </p>
+          )}
+
+        </div>
+
         <div className="jobs-section">
 
           <div className="section-heading">
-            <p>CAREER OPPORTUNITIES</p>
+            <p>
+              CAREER OPPORTUNITIES
+            </p>
 
             <h2>
               Recommended Jobs
             </h2>
 
             <span>
-              Jobs selected based on your skills and career goal.
+              Jobs selected based on your skills and preferences.
             </span>
           </div>
 
           <div className="jobs-grid">
 
-            {jobs.map(job => {
+            {filteredJobs.length > 0 ? (
+              filteredJobs.map(job => {
 
-              const match = calculateMatch(job)
+                const match = calculateMatch(job)
 
-              return (
-                <div
-                  className="job-card"
-                  key={job.title}
-                >
-
-                  <div className="job-card-top">
-
-                    <div className="job-icon">
-                      💼
-                    </div>
-
-                    <div className="match-badge">
-                      {match}% Match
-                    </div>
-
-                  </div>
-
-                  <h3>
-                    {job.title}
-                  </h3>
-
-                  <p className="company-name">
-                    {job.company}
-                  </p>
-
-                  <div className="job-details">
-
-                    <span>
-                      📍 {job.location}
-                    </span>
-
-                    <span>
-                      💼 {job.type}
-                    </span>
-
-                  </div>
-
-                  <div className="job-skills">
-
-                    {job.skills.map(skill => (
-                      <span key={skill}>
-                        {skill}
-                      </span>
-                    ))}
-
-                  </div>
-
-                  <a
-                    href={job.applyLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="apply-btn"
+                return (
+                  <div
+                    className="job-card"
+                    key={`${job.title}-${job.company}`}
                   >
-                    Apply Now →
-                  </a>
 
-                </div>
-              )
-            })}
+                    <div className="job-card-top">
+
+                      <div className="job-icon">
+                        💼
+                      </div>
+
+                      <div className="match-badge">
+                        {match}% Match
+                      </div>
+
+                    </div>
+
+                    <h3>
+                      {job.title}
+                    </h3>
+
+                    <p className="company-name">
+                      {job.company}
+                    </p>
+
+                    <div className="job-details">
+
+                      <span>
+                        📍 {job.location}
+                      </span>
+
+                      <span>
+                        💼 {job.type}
+                      </span>
+
+                    </div>
+
+                    <div className="job-skills">
+
+                      {job.skills.map(skill => (
+                        <span key={skill}>
+                          {skill}
+                        </span>
+                      ))}
+
+                    </div>
+
+                    <a
+                      href={job.applyLink}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="apply-btn"
+                    >
+                      Apply Now →
+                    </a>
+
+                  </div>
+                )
+              })
+            ) : (
+              <div className="no-jobs">
+                <h3>
+                  No matching jobs found
+                </h3>
+
+                <p>
+                  Try changing your job preferences.
+                </p>
+              </div>
+            )}
 
           </div>
 
@@ -293,4 +576,3 @@ function JobRecommendations() {
 }
 
 export default JobRecommendations
-

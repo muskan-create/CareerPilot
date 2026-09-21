@@ -2,21 +2,7 @@ import { useState, useEffect } from 'react'
 import './DSATracker.css'
 
 function DSATracker() {
-
-  const [problems, setProblems] = useState(() => {
-    const savedProblems = localStorage.getItem('dsaProblems')
-
-    if (savedProblems) {
-      try {
-        return JSON.parse(savedProblems)
-      } catch {
-        return []
-      }
-    }
-
-    return []
-  })
-
+  const [problems, setProblems] = useState([])
   const [problemName, setProblemName] = useState('')
   const [difficulty, setDifficulty] = useState('Easy')
   const [topic, setTopic] = useState('Arrays')
@@ -43,11 +29,6 @@ function DSATracker() {
 
         if (response.ok) {
           setProblems(data.dsaProblems || [])
-
-          localStorage.setItem(
-            'dsaProblems',
-            JSON.stringify(data.dsaProblems || [])
-          )
         }
       } catch (error) {
         console.log(
@@ -60,212 +41,212 @@ function DSATracker() {
     loadDSAProblems()
   }, [])
 
-  // ADD PROBLEM
   async function addProblem(e) {
-  e.preventDefault()
+    e.preventDefault()
 
-  if (!problemName.trim()) {
-    alert('Please enter problem name.')
-    return
-  }
-
-  const newProblem = {
-    id: Date.now(),
-    name: problemName.trim(),
-    difficulty: difficulty,
-    topic: topic,
-    solved: false
-  }
-
-  try {
-    const token = localStorage.getItem('careerPilotToken')
-
-    if (!token) {
-      alert('Please login again.')
+    if (!problemName.trim()) {
+      alert('Please enter problem name.')
       return
     }
 
-    const updatedProblems = [
-      ...problems,
-      newProblem
-    ]
+    const newProblem = {
+      id: Date.now(),
+      name: problemName.trim(),
+      difficulty,
+      topic,
+      solved: false
+    }
 
-    const response = await fetch(
-      'http://127.0.0.1:5000/api/auth/dsa',
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + token
-        },
-        body: JSON.stringify({
-          dsaProblems: updatedProblems
-        })
+    try {
+      const token = localStorage.getItem('careerPilotToken')
+
+      if (!token) {
+        alert('Please login again.')
+        return
       }
-    )
 
-    const data = await response.json()
+      const updatedProblems = [
+        ...problems,
+        newProblem
+      ]
 
-    if (!response.ok) {
-      alert(data.message || 'Unable to save DSA problem.')
-      return
+      const response = await fetch(
+        'http://127.0.0.1:5000/api/auth/dsa',
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            dsaProblems: updatedProblems
+          })
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(
+          data.message ||
+          'Unable to save DSA problem.'
+        )
+        return
+      }
+
+      setProblems(data.dsaProblems || [])
+      setProblemName('')
+      setDifficulty('Easy')
+      setTopic('Arrays')
+
+      console.log(
+        'DSA problem saved to MongoDB successfully'
+      )
+    } catch (error) {
+      console.log(
+        'Unable to save DSA problem:',
+        error.message
+      )
+
+      alert('Unable to connect to server.')
     }
-
-    setProblems(data.dsaProblems)
-
-    localStorage.setItem(
-      'dsaProblems',
-      JSON.stringify(data.dsaProblems)
-    )
-
-    setProblemName('')
-    setDifficulty('Easy')
-    setTopic('Arrays')
-
-    console.log('DSA problem saved to MongoDB successfully')
-  } catch (error) {
-    console.log(
-      'Unable to save DSA problem:',
-      error.message
-    )
-
-    alert('Unable to connect to server.')
   }
-}
-  // MARK / UNMARK SOLVED
+
   async function toggleSolved(id) {
-  const updatedProblems = problems.map((problem) => {
+    const updatedProblems = problems.map(
+      problem => {
+        if (problem.id === id) {
+          return {
+            ...problem,
+            solved: !problem.solved
+          }
+        }
 
-    if (problem.id === id) {
-      return {
-        ...problem,
-        solved: !problem.solved
-      }
-    }
-
-    return problem
-  })
-
-  try {
-    const token = localStorage.getItem('careerPilotToken')
-
-    if (!token) {
-      alert('Please login again.')
-      return
-    }
-
-    const response = await fetch(
-      'http://127.0.0.1:5000/api/auth/dsa',
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + token
-        },
-        body: JSON.stringify({
-          dsaProblems: updatedProblems
-        })
+        return problem
       }
     )
 
-    const data = await response.json()
+    try {
+      const token = localStorage.getItem(
+        'careerPilotToken'
+      )
 
-    if (!response.ok) {
-      alert(data.message || 'Unable to update problem.')
-      return
+      if (!token) {
+        alert('Please login again.')
+        return
+      }
+
+      const response = await fetch(
+        'http://127.0.0.1:5000/api/auth/dsa',
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            dsaProblems: updatedProblems
+          })
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(
+          data.message ||
+          'Unable to update problem.'
+        )
+        return
+      }
+
+      setProblems(data.dsaProblems || [])
+
+      console.log(
+        'DSA solved status saved to MongoDB successfully'
+      )
+    } catch (error) {
+      console.log(
+        'Unable to update DSA problem:',
+        error.message
+      )
+
+      alert('Unable to connect to server.')
     }
-
-    setProblems(data.dsaProblems)
-
-    localStorage.setItem(
-      'dsaProblems',
-      JSON.stringify(data.dsaProblems)
-    )
-
-    console.log('DSA solved status saved to MongoDB successfully')
-  } catch (error) {
-    console.log(
-      'Unable to update DSA problem:',
-      error.message
-    )
-
-    alert('Unable to connect to server.')
   }
-}
 
-  // DELETE PROBLEM
   async function deleteProblem(id) {
-  const updatedProblems = problems.filter(
-    (problem) => problem.id !== id
-  )
+    const updatedProblems = problems.filter(
+      problem => problem.id !== id
+    )
 
-  try {
-    const token = localStorage.getItem('careerPilotToken')
+    try {
+      const token = localStorage.getItem(
+        'careerPilotToken'
+      )
 
-    if (!token) {
-      alert('Please login again.')
-      return
-    }
-
-    const response = await fetch(
-      'http://127.0.0.1:5000/api/auth/dsa',
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + token
-        },
-        body: JSON.stringify({
-          dsaProblems: updatedProblems
-        })
+      if (!token) {
+        alert('Please login again.')
+        return
       }
-    )
 
-    const data = await response.json()
+      const response = await fetch(
+        'http://127.0.0.1:5000/api/auth/dsa',
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            dsaProblems: updatedProblems
+          })
+        }
+      )
 
-    if (!response.ok) {
-      alert(data.message || 'Unable to delete problem.')
-      return
+      const data = await response.json()
+
+      if (!response.ok) {
+        alert(
+          data.message ||
+          'Unable to delete problem.'
+        )
+        return
+      }
+
+      setProblems(data.dsaProblems || [])
+
+      console.log(
+        'DSA problem deleted from MongoDB successfully'
+      )
+    } catch (error) {
+      console.log(
+        'Unable to delete DSA problem:',
+        error.message
+      )
+
+      alert('Unable to connect to server.')
     }
-
-    setProblems(data.dsaProblems)
-
-    localStorage.setItem(
-      'dsaProblems',
-      JSON.stringify(data.dsaProblems)
-    )
-
-    console.log('DSA problem deleted from MongoDB successfully')
-  } catch (error) {
-    console.log(
-      'Unable to delete DSA problem:',
-      error.message
-    )
-
-    alert('Unable to connect to server.')
   }
-}
 
-  // BASIC STATS
   const totalProblems = problems.length
 
   const solvedProblems = problems.filter(
-    (problem) => problem.solved
+    problem => problem.solved
   ).length
 
   const easyProblems = problems.filter(
-    (problem) => problem.difficulty === 'Easy'
+    problem => problem.difficulty === 'Easy'
   ).length
 
   const mediumProblems = problems.filter(
-    (problem) => problem.difficulty === 'Medium'
+    problem => problem.difficulty === 'Medium'
   ).length
 
   const hardProblems = problems.filter(
-    (problem) => problem.difficulty === 'Hard'
+    problem => problem.difficulty === 'Hard'
   ).length
 
-  // OVERALL PROGRESS
   const progress =
     totalProblems === 0
       ? 0
@@ -273,7 +254,6 @@ function DSATracker() {
           (solvedProblems / totalProblems) * 100
         )
 
-  // TOPICS
   const topics = [
     'Arrays',
     'Strings',
@@ -288,41 +268,42 @@ function DSATracker() {
     'Dynamic Programming'
   ]
 
-  // TOPIC-WISE PROGRESS
-  const topicProgress = topics.map((topicName) => {
+  const topicProgress = topics.map(
+    topicName => {
+      const topicProblems = problems.filter(
+        problem =>
+          problem.topic === topicName
+      )
 
-    const topicProblems = problems.filter(
-      (problem) => problem.topic === topicName
-    )
+      const topicSolved =
+        topicProblems.filter(
+          problem => problem.solved
+        ).length
 
-    const topicSolved = topicProblems.filter(
-      (problem) => problem.solved
-    ).length
+      const topicTotal =
+        topicProblems.length
 
-    const topicTotal = topicProblems.length
+      const topicPercentage =
+        topicTotal === 0
+          ? 0
+          : Math.round(
+              (topicSolved / topicTotal) * 100
+            )
 
-    const topicPercentage =
-      topicTotal === 0
-        ? 0
-        : Math.round(
-            (topicSolved / topicTotal) * 100
-          )
-
-    return {
-      name: topicName,
-      solved: topicSolved,
-      total: topicTotal,
-      percentage: topicPercentage
+      return {
+        name: topicName,
+        solved: topicSolved,
+        total: topicTotal,
+        percentage: topicPercentage
+      }
     }
-  })
+  )
 
   return (
     <div className="dsa-page">
-
       <div className="dsa-container">
 
         <div className="dsa-header">
-
           <p className="dsa-small-heading">
             CAREERPILOT
           </p>
@@ -334,7 +315,6 @@ function DSATracker() {
           <p>
             Track your Data Structures & Algorithms practice.
           </p>
-
         </div>
 
         <div className="dsa-stats">
@@ -369,7 +349,6 @@ function DSATracker() {
         <div className="dsa-progress-box">
 
           <div className="dsa-progress-header">
-
             <h2>
               Your Progress
             </h2>
@@ -377,18 +356,15 @@ function DSATracker() {
             <strong>
               {progress}%
             </strong>
-
           </div>
 
           <div className="dsa-progress-bar">
-
             <div
               className="dsa-progress-fill"
               style={{
                 width: `${progress}%`
               }}
             ></div>
-
           </div>
 
           <p>
@@ -398,9 +374,8 @@ function DSATracker() {
         </div>
 
         {topicProgress.some(
-          (topic) => topic.total > 0
+          topic => topic.total > 0
         ) && (
-
           <div className="topic-progress-box">
 
             <h2>
@@ -411,17 +386,15 @@ function DSATracker() {
 
               {topicProgress
                 .filter(
-                  (topic) => topic.total > 0
+                  topic => topic.total > 0
                 )
-                .map((topic) => (
-
+                .map(topic => (
                   <div
                     className="topic-progress-item"
                     key={topic.name}
                   >
 
                     <div className="topic-progress-info">
-
                       <span>
                         {topic.name}
                       </span>
@@ -429,7 +402,6 @@ function DSATracker() {
                       <span>
                         {topic.solved} / {topic.total}
                       </span>
-
                     </div>
 
                     <div className="topic-progress-bar">
@@ -448,13 +420,11 @@ function DSATracker() {
                     </p>
 
                   </div>
-
                 ))}
 
             </div>
 
           </div>
-
         )}
 
         <div className="add-problem-box">
@@ -469,18 +439,17 @@ function DSATracker() {
               type="text"
               placeholder="Enter problem name"
               value={problemName}
-              onChange={(e) =>
+              onChange={e =>
                 setProblemName(e.target.value)
               }
             />
 
             <select
               value={difficulty}
-              onChange={(e) =>
+              onChange={e =>
                 setDifficulty(e.target.value)
               }
             >
-
               <option value="Easy">
                 Easy
               </option>
@@ -492,16 +461,14 @@ function DSATracker() {
               <option value="Hard">
                 Hard
               </option>
-
             </select>
 
             <select
               value={topic}
-              onChange={(e) =>
+              onChange={e =>
                 setTopic(e.target.value)
               }
             >
-
               <option value="Arrays">
                 Arrays
               </option>
@@ -545,7 +512,6 @@ function DSATracker() {
               <option value="Dynamic Programming">
                 Dynamic Programming
               </option>
-
             </select>
 
             <button type="submit">
@@ -563,7 +529,6 @@ function DSATracker() {
           </h2>
 
           {problems.length === 0 ? (
-
             <div className="empty-dsa">
 
               <div>
@@ -579,16 +544,15 @@ function DSATracker() {
               </p>
 
             </div>
-
           ) : (
-
             <div className="problem-list">
 
-              {problems.map((problem) => (
-
+              {problems.map(problem => (
                 <div
                   className={`problem-card ${
-                    problem.solved ? 'solved' : ''
+                    problem.solved
+                      ? 'solved'
+                      : ''
                   }`}
                   key={problem.id}
                 >
@@ -640,11 +604,9 @@ function DSATracker() {
                   </button>
 
                 </div>
-
               ))}
 
             </div>
-
           )}
 
         </div>
@@ -657,7 +619,6 @@ function DSATracker() {
         </a>
 
       </div>
-
     </div>
   )
 }

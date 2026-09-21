@@ -6,13 +6,86 @@ function Settings() {
     return localStorage.getItem('careerPilotTheme') || 'light'
   })
 
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [passwordMessage, setPasswordMessage] = useState('')
+  const [passwordError, setPasswordError] = useState('')
+  const [changingPassword, setChangingPassword] = useState(false)
+
   const handleThemeChange = (newTheme) => {
     setTheme(newTheme)
     localStorage.setItem('careerPilotTheme', newTheme)
     document.body.setAttribute('data-theme', newTheme)
   }
 
+  const handleChangePassword = async (event) => {
+    event.preventDefault()
+
+    setPasswordMessage('')
+    setPasswordError('')
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      setPasswordError('Please fill all password fields.')
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      setPasswordError('New password and confirm password do not match.')
+      return
+    }
+
+    if (newPassword.length < 6) {
+      setPasswordError('New password must be at least 6 characters.')
+      return
+    }
+
+    try {
+      setChangingPassword(true)
+
+      const token = localStorage.getItem('careerPilotToken')
+
+      if (!token) {
+        setPasswordError('Please login again.')
+        return
+      }
+
+      const response = await fetch(
+        'http://127.0.0.1:5000/api/auth/change-password',
+        {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: 'Bearer ' + token
+          },
+          body: JSON.stringify({
+            currentPassword,
+            newPassword
+          })
+        }
+      )
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setPasswordError(data.message || 'Unable to change password.')
+        return
+      }
+
+      setPasswordMessage('Password changed successfully.')
+
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch  {
+      setPasswordError('Unable to connect to server.')
+    } finally {
+      setChangingPassword(false)
+    }
+  }
+
   const handleLogout = () => {
+    localStorage.removeItem('careerPilotToken')
     localStorage.removeItem('careerPilotLoggedIn')
     localStorage.removeItem('careerPilotUser')
     window.location.href = '/'
@@ -79,6 +152,68 @@ function Settings() {
               View Progress →
             </a>
           </div>
+        </div>
+
+        <div className="settings-card">
+          <div className="settings-section-heading">
+            <p>SECURITY</p>
+            <h2>Change Password</h2>
+            <span>Update your CareerPilot account password.</span>
+          </div>
+
+          <form
+            className="password-form"
+            onSubmit={handleChangePassword}
+          >
+            <input
+              type="password"
+              placeholder="Current password"
+              value={currentPassword}
+              onChange={(event) =>
+                setCurrentPassword(event.target.value)
+              }
+            />
+
+            <input
+              type="password"
+              placeholder="New password"
+              value={newPassword}
+              onChange={(event) =>
+                setNewPassword(event.target.value)
+              }
+            />
+
+            <input
+              type="password"
+              placeholder="Confirm new password"
+              value={confirmPassword}
+              onChange={(event) =>
+                setConfirmPassword(event.target.value)
+              }
+            />
+
+            <button
+              type="submit"
+              className="settings-btn"
+              disabled={changingPassword}
+            >
+              {changingPassword
+                ? 'Changing...'
+                : 'Change Password'}
+            </button>
+
+            {passwordMessage && (
+              <p className="success-message">
+                {passwordMessage}
+              </p>
+            )}
+
+            {passwordError && (
+              <p className="error-message">
+                {passwordError}
+              </p>
+            )}
+          </form>
         </div>
 
         <div className="settings-card">
@@ -164,4 +299,3 @@ function Settings() {
 }
 
 export default Settings
-

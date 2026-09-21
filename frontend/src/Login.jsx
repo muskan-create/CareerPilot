@@ -18,7 +18,7 @@ function Login() {
 
     try {
       const response = await fetch(
-        'https://careerpilot-061q.onrender.com/api/auth/login',
+        'http://127.0.0.1:5000/api/auth/login',
         {
           method: 'POST',
           headers: {
@@ -66,8 +66,11 @@ function Login() {
       }
 
       window.location.href = '/dashboard'
-    } catch {
-      setError('Unable to connect to server. Please try again.')
+    } catch (error) {
+      console.log('Login error:', error)
+      setError(
+        'Unable to connect to server. Please make sure the backend is running.'
+      )
     }
   }
 

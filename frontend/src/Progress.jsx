@@ -1,11 +1,119 @@
+import { useEffect, useState } from 'react'
 import './Progress.css'
 
 function Progress() {
-  const profileData = localStorage.getItem('careerPilotProfile')
+  const [profile, setProfile] = useState(null)
+  const [resumeScore, setResumeScore] = useState(0)
+  const [dsaProblems, setDsaProblems] = useState([])
+  const [interviewResults, setInterviewResults] = useState([])
+  const [loading, setLoading] = useState(true)
 
-  const profile = profileData
-    ? JSON.parse(profileData)
-    : null
+  useEffect(() => {
+    async function loadProgress() {
+      const token = localStorage.getItem(
+        'careerPilotToken'
+      )
+
+      if (!token) {
+        setLoading(false)
+        return
+      }
+
+      try {
+        const headers = {
+          Authorization: `Bearer ${token}`
+        }
+
+        const profileResponse = await fetch(
+          'http://127.0.0.1:5000/api/auth/profile',
+          {
+            headers
+          }
+        )
+
+        const profileData =
+          await profileResponse.json()
+
+        if (
+          profileResponse.ok &&
+          profileData.user
+        ) {
+          const user = profileData.user
+
+          setProfile(user)
+          setResumeScore(
+            user.resumeScore || 0
+          )
+          setDsaProblems(
+            user.dsaProblems || []
+          )
+        }
+
+        const interviewResponse =
+          await fetch(
+            'http://127.0.0.1:5000/api/auth/mock-interviews',
+            {
+              headers
+            }
+          )
+
+        const interviewData =
+          await interviewResponse.json()
+
+        if (
+          interviewResponse.ok &&
+          Array.isArray(
+            interviewData.mockInterviews
+          )
+        ) {
+          setInterviewResults(
+            interviewData.mockInterviews
+          )
+        }
+      } catch (error) {
+        console.log(
+          'Unable to load progress data:',
+          error.message
+        )
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadProgress()
+
+    window.addEventListener(
+      'focus',
+      loadProgress
+    )
+
+    return () => {
+      window.removeEventListener(
+        'focus',
+        loadProgress
+      )
+    }
+  }, [])
+
+  if (loading) {
+    return (
+      <div className="progress-page">
+        <div className="progress-container">
+          <div className="progress-header">
+            <div>
+              <p className="progress-small-heading">
+                CAREERPILOT
+              </p>
+
+              <h1>
+                Loading Your Progress...
+              </h1>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   let profileCompletion = 0
 
@@ -27,42 +135,36 @@ function Progress() {
     )
   }
 
-  const resumeScore = Number(
-    localStorage.getItem('resumeScore') || 0
-  )
-
-  const problemsData = localStorage.getItem('dsaProblems')
-
-  const dsaProblems = problemsData
-    ? JSON.parse(problemsData)
-    : []
-
-  const solvedProblems = dsaProblems.filter(
-    problem => problem.solved
-  ).length
+  const solvedProblems =
+    dsaProblems.filter(
+      problem => problem.solved
+    ).length
 
   const dsaProgress =
     dsaProblems.length === 0
       ? 0
       : Math.round(
-          (solvedProblems / dsaProblems.length) * 100
+          (solvedProblems /
+            dsaProblems.length) *
+            100
         )
 
-  const mockInterviewCount = Number(
-    localStorage.getItem('mockInterviewCount') || 0
-  )
+  const mockInterviewCount =
+    interviewResults.length
 
-  const lastInterviewScore = Number(
-    localStorage.getItem('lastInterviewScore') || 0
-  )
+  const lastInterview =
+    interviewResults.length > 0
+      ? interviewResults[
+          interviewResults.length - 1
+        ]
+      : null
 
-  const resultsData = localStorage.getItem(
-    'mockInterviewResults'
-  )
-
-  const interviewResults = resultsData
-    ? JSON.parse(resultsData)
-    : []
+  const lastInterviewScore =
+    lastInterview
+      ? Number(
+          lastInterview.finalScore || 0
+        )
+      : 0
 
   const averageInterviewScore =
     interviewResults.length === 0
@@ -70,19 +172,32 @@ function Progress() {
       : Math.round(
           interviewResults.reduce(
             (total, interview) =>
-              total + Number(interview.score || 0),
+              total +
+              Number(
+                interview.finalScore || 0
+              ),
             0
-          ) / interviewResults.length
+          ) /
+            interviewResults.length
         )
 
-  const overallProgress = Math.round(
-    (
-      profileCompletion +
-      resumeScore +
-      dsaProgress +
-      lastInterviewScore
-    ) / 4
-  )
+  const interviewProgress =
+    mockInterviewCount > 0
+      ? Math.min(
+          mockInterviewCount * 20,
+          100
+        )
+      : 0
+
+  const overallProgress =
+    Math.round(
+      (
+        profileCompletion +
+        resumeScore +
+        dsaProgress +
+        lastInterviewScore
+      ) / 4
+    )
 
   return (
     <div className="progress-page">
@@ -108,6 +223,7 @@ function Progress() {
         <div className="overall-card">
 
           <div className="overall-content">
+
             <div>
               <p className="overall-label">
                 OVERALL PROGRESS
@@ -125,6 +241,7 @@ function Progress() {
             <div className="overall-number">
               {overallProgress}%
             </div>
+
           </div>
 
           <div className="overall-progress-bar">
@@ -137,8 +254,13 @@ function Progress() {
           </div>
 
           <div className="overall-footer">
-            <span>Career preparation</span>
-            <span>{overallProgress}% completed</span>
+            <span>
+              Career preparation
+            </span>
+
+            <span>
+              {overallProgress}% completed
+            </span>
           </div>
 
         </div>
@@ -146,7 +268,9 @@ function Progress() {
         <div className="progress-grid">
 
           <div className="progress-card">
+
             <div className="progress-card-top">
+
               <div className="progress-card-icon">
                 👤
               </div>
@@ -154,15 +278,19 @@ function Progress() {
               <span className="card-status">
                 PROFILE
               </span>
+
             </div>
 
-            <h3>Profile</h3>
+            <h3>
+              Profile
+            </h3>
 
             <p>
               Complete your career profile.
             </p>
 
             <div className="progress-card-bottom">
+
               <strong>
                 {profileCompletion}%
               </strong>
@@ -170,6 +298,7 @@ function Progress() {
               <span>
                 Completed
               </span>
+
             </div>
 
             <div className="progress-bar">
@@ -180,10 +309,13 @@ function Progress() {
                 }}
               />
             </div>
+
           </div>
 
           <div className="progress-card">
+
             <div className="progress-card-top">
+
               <div className="progress-card-icon">
                 📄
               </div>
@@ -191,15 +323,19 @@ function Progress() {
               <span className="card-status">
                 RESUME
               </span>
+
             </div>
 
-            <h3>Resume</h3>
+            <h3>
+              Resume
+            </h3>
 
             <p>
               Improve your resume score.
             </p>
 
             <div className="progress-card-bottom">
+
               <strong>
                 {resumeScore}%
               </strong>
@@ -207,6 +343,7 @@ function Progress() {
               <span>
                 Resume score
               </span>
+
             </div>
 
             <div className="progress-bar">
@@ -217,10 +354,13 @@ function Progress() {
                 }}
               />
             </div>
+
           </div>
 
           <div className="progress-card">
+
             <div className="progress-card-top">
+
               <div className="progress-card-icon">
                 💻
               </div>
@@ -228,15 +368,19 @@ function Progress() {
               <span className="card-status">
                 DSA
               </span>
+
             </div>
 
-            <h3>DSA</h3>
+            <h3>
+              DSA
+            </h3>
 
             <p>
               Solve coding problems regularly.
             </p>
 
             <div className="progress-card-bottom">
+
               <strong>
                 {dsaProgress}%
               </strong>
@@ -244,6 +388,7 @@ function Progress() {
               <span>
                 Progress
               </span>
+
             </div>
 
             <div className="progress-bar">
@@ -254,10 +399,13 @@ function Progress() {
                 }}
               />
             </div>
+
           </div>
 
           <div className="progress-card">
+
             <div className="progress-card-top">
+
               <div className="progress-card-icon">
                 🎤
               </div>
@@ -265,15 +413,19 @@ function Progress() {
               <span className="card-status">
                 PRACTICE
               </span>
+
             </div>
 
-            <h3>Mock Interviews</h3>
+            <h3>
+              Mock Interviews
+            </h3>
 
             <p>
               Practice interviews and improve confidence.
             </p>
 
             <div className="progress-card-bottom">
+
               <strong>
                 {mockInterviewCount}
               </strong>
@@ -281,16 +433,20 @@ function Progress() {
               <span>
                 Interviews
               </span>
+
             </div>
 
             <div className="progress-bar">
+
               <div
                 className="progress-fill interview-progress"
                 style={{
-                  width: `${mockInterviewCount > 0 ? 100 : 0}%`
+                  width: `${interviewProgress}%`
                 }}
               />
+
             </div>
+
           </div>
 
         </div>
@@ -298,15 +454,21 @@ function Progress() {
         <div className="interview-analytics">
 
           <div className="section-heading">
-            <p>PERFORMANCE</p>
+
+            <p>
+              PERFORMANCE
+            </p>
+
             <h2>
               Interview Analytics
             </h2>
+
           </div>
 
           <div className="analytics-grid">
 
             <div className="analytics-card">
+
               <span>
                 LATEST SCORE
               </span>
@@ -319,9 +481,11 @@ function Progress() {
               <p>
                 Your latest interview
               </p>
+
             </div>
 
             <div className="analytics-card">
+
               <span>
                 AVERAGE SCORE
               </span>
@@ -334,9 +498,11 @@ function Progress() {
               <p>
                 Across all interviews
               </p>
+
             </div>
 
             <div className="analytics-card">
+
               <span>
                 TOTAL INTERVIEWS
               </span>
@@ -348,6 +514,7 @@ function Progress() {
               <p>
                 Practice sessions
               </p>
+
             </div>
 
           </div>
@@ -357,16 +524,21 @@ function Progress() {
         <div className="history-section">
 
           <div className="section-heading">
-            <p>YOUR ACTIVITY</p>
+
+            <p>
+              YOUR ACTIVITY
+            </p>
 
             <h2>
               Interview History
             </h2>
+
           </div>
 
           {interviewResults.length === 0 ? (
 
             <div className="no-history">
+
               <div className="empty-icon">
                 🎤
               </div>
@@ -383,6 +555,7 @@ function Progress() {
               <a href="/mock-interview">
                 Start your first interview →
               </a>
+
             </div>
 
           ) : (
@@ -395,7 +568,9 @@ function Progress() {
 
                   <div
                     className="history-card"
-                    key={index}
+                    key={
+                      interview._id || index
+                    }
                   >
 
                     <div className="history-icon">
@@ -403,18 +578,31 @@ function Progress() {
                     </div>
 
                     <div className="history-info">
+
                       <h3>
-                        {interview.type} Interview
+                        {interview.role} Interview
                       </h3>
 
                       <p>
-                        {interview.date}
+                        {interview.createdAt
+                          ? new Date(
+                              interview.createdAt
+                            ).toLocaleDateString()
+                          : 'Date unavailable'}
                       </p>
+
                     </div>
 
                     <div className="history-score">
-                      {interview.score}
-                      <span>/100</span>
+
+                      {Number(
+                        interview.finalScore || 0
+                      )}
+
+                      <span>
+                        /100
+                      </span>
+
                     </div>
 
                   </div>
@@ -436,17 +624,20 @@ function Progress() {
             </div>
 
             <div>
+
               <p className="goal-label">
                 CAREER GOAL
               </p>
 
               <h2>
-                {profile?.careerGoal || 'Software Developer'}
+                {profile?.careerGoal ||
+                  'Software Developer'}
               </h2>
 
               <p className="goal-description">
                 Keep building your skills and stay consistent.
               </p>
+
             </div>
 
           </div>

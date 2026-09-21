@@ -2,48 +2,13 @@ import { useState, useEffect } from 'react'
 import './Dashboard.css'
 
 function Dashboard() {
-
-  const [profile, setProfile] = useState(() => {
-    const savedProfile = localStorage.getItem('careerPilotProfile')
-
-    if (!savedProfile) {
-      return null
-    }
-
-    try {
-      return JSON.parse(savedProfile)
-    } catch {
-      return null
-    }
-  })
-
-  const [resumeScore, setResumeScore] = useState(() => {
-    const savedScore = localStorage.getItem('resumeScore')
-    return savedScore ? Number(savedScore) : 0
-  })
-
-  const [dsaProblems, setDsaProblems] = useState(() => {
-    const savedProblems = localStorage.getItem('dsaProblems')
-
-    if (!savedProblems) {
-      return []
-    }
-
-    try {
-      return JSON.parse(savedProblems)
-    } catch {
-      return []
-    }
-  })
-
-  const [mockInterviewCount, setMockInterviewCount] = useState(() => {
-    const savedCount = localStorage.getItem('mockInterviewCount')
-    return savedCount ? Number(savedCount) : 0
-  })
+  const [profile, setProfile] = useState(null)
+  const [resumeScore, setResumeScore] = useState(0)
+  const [dsaProblems, setDsaProblems] = useState([])
+  const [mockInterviewCount, setMockInterviewCount] = useState(0)
 
   useEffect(() => {
-
-    async function loadDashboardProfile() {
+    async function loadDashboardData() {
       try {
         const token = localStorage.getItem('careerPilotToken')
 
@@ -51,109 +16,89 @@ function Dashboard() {
           return
         }
 
-        const response = await fetch(
+        const headers = {
+          Authorization: 'Bearer ' + token
+        }
+
+        const profileResponse = await fetch(
           'http://127.0.0.1:5000/api/auth/profile',
           {
-            headers: {
-              Authorization: 'Bearer ' + token
-            }
+            headers
           }
         )
 
-        const data = await response.json()
+        const profileData = await profileResponse.json()
 
-      if (response.ok && data.user) {
-  setProfile(data.user)
+        if (profileResponse.ok && profileData.user) {
+          const user = profileData.user
 
-  setResumeScore(data.user.resumeScore || 0)
+          setProfile(user)
+          setResumeScore(user.resumeScore || 0)
+          setDsaProblems(user.dsaProblems || [])
 
-  localStorage.setItem(
-    'careerPilotProfile',
-    JSON.stringify(data.user)
-  )
+          localStorage.setItem(
+            'careerPilotProfile',
+            JSON.stringify(user)
+          )
 
-  localStorage.setItem(
-    'resumeScore',
-    String(data.user.resumeScore || 0)
-  )
-}
-setDsaProblems(data.user.dsaProblems || [])
+          localStorage.setItem(
+            'resumeScore',
+            String(user.resumeScore || 0)
+          )
 
-localStorage.setItem(
-  'dsaProblems',
-  JSON.stringify(data.user.dsaProblems || [])
-)
-      } catch {
-        console.log('Unable to load dashboard profile')
-      }
-    }
-
-    const updateDashboardData = () => {
-
-      loadDashboardProfile()
-
-      const savedResumeScore =
-        localStorage.getItem('resumeScore')
-
-      setResumeScore(
-        savedResumeScore
-          ? Number(savedResumeScore)
-          : 0
-      )
-
-      const savedProblems =
-        localStorage.getItem('dsaProblems')
-
-      if (savedProblems) {
-        try {
-          setDsaProblems(JSON.parse(savedProblems))
-        } catch {
-          setDsaProblems([])
+          localStorage.setItem(
+            'dsaProblems',
+            JSON.stringify(user.dsaProblems || [])
+          )
         }
-      } else {
-        setDsaProblems([])
+
+        const interviewResponse = await fetch(
+          'http://127.0.0.1:5000/api/auth/mock-interviews',
+          {
+            headers
+          }
+        )
+
+        const interviewData =
+          await interviewResponse.json()
+
+        if (interviewResponse.ok) {
+          const interviews =
+            interviewData.mockInterviews || []
+
+          setMockInterviewCount(interviews.length)
+
+          localStorage.setItem(
+            'mockInterviewCount',
+            String(interviews.length)
+          )
+        }
+      } catch (error) {
+        console.log(
+          'Unable to load dashboard data:',
+          error.message
+        )
       }
-
-      const savedCount =
-        localStorage.getItem('mockInterviewCount')
-
-      setMockInterviewCount(
-        savedCount
-          ? Number(savedCount)
-          : 0
-      )
     }
 
-    updateDashboardData()
-
-    window.addEventListener(
-      'storage',
-      updateDashboardData
-    )
+    loadDashboardData()
 
     window.addEventListener(
       'focus',
-      updateDashboardData
+      loadDashboardData
     )
 
     return () => {
       window.removeEventListener(
-        'storage',
-        updateDashboardData
-      )
-
-      window.removeEventListener(
         'focus',
-        updateDashboardData
+        loadDashboardData
       )
     }
-
   }, [])
 
   let completedFields = 0
 
   if (profile) {
-
     if (profile.name) completedFields++
     if (profile.email) completedFields++
     if (profile.college) completedFields++
@@ -163,7 +108,6 @@ localStorage.setItem(
     if (profile.github) completedFields++
     if (profile.linkedin) completedFields++
     if (profile.careerGoal) completedFields++
-
   }
 
   const profileCompletion = Math.round(
@@ -171,14 +115,15 @@ localStorage.setItem(
   )
 
   const dsaSolved = dsaProblems.filter(
-    (problem) => problem.solved
+    problem => problem.solved
   ).length
 
-  const dsaProgress = dsaProblems.length === 0
-    ? 0
-    : Math.round(
-        (dsaSolved / dsaProblems.length) * 100
-      )
+  const dsaProgress =
+    dsaProblems.length === 0
+      ? 0
+      : Math.round(
+          (dsaSolved / dsaProblems.length) * 100
+        )
 
   const overallProgress = Math.round(
     (

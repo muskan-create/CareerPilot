@@ -1,5 +1,7 @@
 .jobs-page {
   min-height: 100vh;
+  padding: 55px 30px 80px;
+  box-sizing: border-box;
   background: radial-gradient(
     circle at 50% 0%,
     var(--card-soft) 0%,
@@ -7,8 +9,6 @@
     var(--bg) 100%
   );
   color: var(--text);
-  padding: 55px 30px 80px;
-  box-sizing: border-box;
 }
 
 .jobs-container {
@@ -18,9 +18,9 @@
 }
 
 .jobs-header {
-  margin-bottom: 32px;
+  margin-bottom: 35px;
   text-align: center;
-  animation: jobsFadeUp 0.5s ease both;
+  animation: jobsFadeUp 0.55s ease both;
 }
 
 .jobs-small-heading {
@@ -28,43 +28,44 @@
   color: var(--muted);
   font-size: 11px;
   font-weight: 800;
-  letter-spacing: 2.5px;
+  letter-spacing: 2.8px;
 }
 
 .jobs-header h1 {
-  margin: 0 0 10px;
+  margin: 0 0 11px;
   color: var(--text);
   font-size: 38px;
-  font-weight: 700;
+  font-weight: 750;
   line-height: 1.2;
-  letter-spacing: -0.6px;
+  letter-spacing: -0.8px;
 }
 
 .jobs-header > p {
-  margin: 0;
+  max-width: 620px;
+  margin: 0 auto;
   color: var(--muted);
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.7;
 }
 
 .job-profile-summary {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 43px;
-  animation: jobsFadeUp 0.55s ease 0.05s both;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 17px;
+  margin-bottom: 28px;
+  animation: jobsFadeUp 0.55s ease 0.06s both;
 }
 
 .profile-summary-card {
   min-height: 125px;
   padding: 25px;
-  background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 16px;
+  box-sizing: border-box;
   display: flex;
   align-items: flex-start;
   gap: 17px;
-  box-sizing: border-box;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
   transition:
     transform 0.25s ease,
     border-color 0.25s ease,
@@ -80,15 +81,15 @@
 }
 
 .summary-icon {
-  width: 45px;
-  height: 45px;
+  width: 46px;
+  height: 46px;
   flex-shrink: 0;
-  border-radius: 11px;
-  background: var(--icon-bg);
-  border: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--icon-bg);
+  border: 1px solid var(--border);
+  border-radius: 12px;
   font-size: 20px;
 }
 
@@ -105,7 +106,7 @@
   margin: 0;
   color: var(--text);
   font-size: 18px;
-  font-weight: 650;
+  font-weight: 700;
   line-height: 1.45;
 }
 
@@ -123,10 +124,20 @@
   color: var(--text);
   font-size: 11px;
   font-weight: 600;
+  line-height: 1.2;
 }
 
-.jobs-section {
-  animation: jobsFadeUp 0.6s ease both;
+.job-preferences-card {
+  margin-bottom: 42px;
+  padding: 27px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 17px;
+  animation: jobsFadeUp 0.6s ease 0.1s both;
+}
+
+.job-preferences-card .section-heading {
+  margin-bottom: 22px;
 }
 
 .section-heading {
@@ -142,17 +153,109 @@
 }
 
 .section-heading h2 {
-  margin: 0 0 6px;
+  margin: 0 0 7px;
   color: var(--text);
   font-size: 25px;
-  font-weight: 700;
+  font-weight: 750;
   line-height: 1.3;
+  letter-spacing: -0.3px;
 }
 
 .section-heading span {
   color: var(--muted);
   font-size: 14px;
   line-height: 1.6;
+}
+
+.job-preferences-form {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: 15px;
+}
+
+.job-preferences-form > div {
+  min-width: 0;
+}
+
+.job-preferences-form label {
+  display: block;
+  margin-bottom: 8px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.job-preferences-form input,
+.job-preferences-form select {
+  width: 100%;
+  height: 45px;
+  padding: 0 13px;
+  box-sizing: border-box;
+  outline: none;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: var(--icon-bg);
+  color: var(--text);
+  font-family: inherit;
+  font-size: 13px;
+  transition:
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.job-preferences-form input::placeholder {
+  color: var(--muted);
+}
+
+.job-preferences-form input:focus,
+.job-preferences-form select:focus {
+  border-color: var(--primary);
+  background: var(--card-soft);
+  box-shadow: 0 0 0 3px var(--shadow);
+}
+
+.save-preferences-btn {
+  height: 43px;
+  margin-top: 19px;
+  padding: 0 19px;
+  border: 1px solid var(--primary);
+  border-radius: 9px;
+  background: var(--primary);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.save-preferences-btn:hover {
+  background: var(--primary-hover);
+  border-color: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px var(--shadow);
+}
+
+.save-preferences-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.job-preference-message {
+  margin: 12px 0 0;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.jobs-section {
+  animation: jobsFadeUp 0.6s ease 0.15s both;
 }
 
 .jobs-grid {
@@ -164,12 +267,12 @@
 .job-card {
   min-height: 330px;
   padding: 25px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
   background: var(--card);
   border: 1px solid var(--border);
   border-radius: 16px;
-  display: flex;
-  flex-direction: column;
-  box-sizing: border-box;
   animation: jobsFadeUp 0.55s ease both;
   transition:
     transform 0.25s ease,
@@ -214,18 +317,18 @@
   background: var(--icon-bg);
   border: 1px solid var(--border);
   border-radius: 12px;
-  font-size: 22px;
+  font-size: 21px;
 }
 
 .match-badge {
   padding: 8px 12px;
+  background: var(--icon-bg);
   border: 1px solid var(--border);
   border-radius: 20px;
-  background: var(--icon-bg);
   color: var(--text);
   font-size: 11px;
   font-weight: 750;
-  letter-spacing: 0.3px;
+  letter-spacing: 0.2px;
   white-space: nowrap;
 }
 
@@ -233,7 +336,7 @@
   margin: 21px 0 6px;
   color: var(--text);
   font-size: 19px;
-  font-weight: 650;
+  font-weight: 700;
   line-height: 1.35;
 }
 
@@ -247,8 +350,8 @@
 .job-details {
   display: flex;
   align-items: center;
-  gap: 15px;
   flex-wrap: wrap;
+  gap: 15px;
   margin-bottom: 19px;
   color: var(--muted);
   font-size: 12px;
@@ -284,14 +387,14 @@
   height: 43px;
   margin-top: auto;
   padding: 0 15px;
-  border: 1px solid var(--primary);
-  border-radius: 9px;
-  background: var(--primary);
-  color: #ffffff;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-sizing: border-box;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 9px;
+  color: #ffffff;
   text-decoration: none;
   font-size: 13px;
   font-weight: 700;
@@ -299,51 +402,97 @@
   transition:
     background 0.2s ease,
     border-color 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .apply-btn:hover {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
-  transform: translateY(-1px);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px var(--shadow);
+}
+
+.no-jobs {
+  grid-column: 1 / -1;
+  padding: 45px 25px;
+  text-align: center;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+}
+
+.no-jobs h3 {
+  margin: 0 0 8px;
+  color: var(--text);
+  font-size: 18px;
+}
+
+.no-jobs p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
 }
 
 .back-dashboard {
   width: 175px;
   height: 43px;
   margin: 30px auto 0;
+  padding: 0 15px;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: center;
+  background: var(--primary);
   border: 1px solid var(--primary);
   border-radius: 9px;
-  background: var(--primary);
   color: #ffffff;
   text-decoration: none;
   font-size: 13px;
   font-weight: 700;
-  box-sizing: border-box;
+  line-height: 1;
   transition:
     background 0.2s ease,
     border-color 0.2s ease,
-    transform 0.2s ease;
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .back-dashboard:hover {
   background: var(--primary-hover);
   border-color: var(--primary-hover);
+  color: #ffffff;
   transform: translateY(-2px);
+  box-shadow: 0 8px 20px var(--shadow);
+}
+
+.back-dashboard:visited {
+  color: #ffffff;
 }
 
 @keyframes jobsFadeUp {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(15px);
   }
 
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .job-preferences-form {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .job-preferences-form > div:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .save-preferences-btn {
+    width: 100%;
   }
 }
 
@@ -373,7 +522,6 @@
   .job-profile-summary {
     grid-template-columns: 1fr;
     gap: 13px;
-    margin-bottom: 35px;
   }
 
   .profile-summary-card {
@@ -381,7 +529,20 @@
     padding: 21px;
   }
 
-  .jobs-section h2 {
+  .job-preferences-card {
+    padding: 22px;
+  }
+
+  .job-preferences-form {
+    grid-template-columns: 1fr;
+    gap: 13px;
+  }
+
+  .job-preferences-form > div:first-child {
+    grid-column: auto;
+  }
+
+  .section-heading h2 {
     font-size: 22px;
   }
 
@@ -408,55 +569,25 @@
     font-size: 17px;
   }
 
-  .job-card h3 {
-    font-size: 18px;
+  .job-preferences-card {
+    padding: 19px;
   }
 
   .job-card {
     padding: 20px;
   }
 
+  .job-card h3 {
+    font-size: 18px;
+  }
+
   .apply-btn,
-  .back-dashboard {
+  .back-dashboard,
+  .save-preferences-btn {
     height: 42px;
   }
 
   .back-dashboard {
     width: 100%;
   }
-}
-
-.jobs-page .back-dashboard {
-  width: 175px;
-  height: 43px;
-  margin: 30px auto 0;
-  padding: 0 15px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--primary);
-  color: #ffffff;
-  border: 1px solid var(--primary);
-  border-radius: 9px;
-  text-decoration: none;
-  font-size: 13px;
-  font-weight: 700;
-  line-height: 1;
-  box-sizing: border-box;
-  transition: 0.2s ease;
-}
-
-.jobs-page .back-dashboard:hover {
-  background: var(--primary-hover);
-  color: #ffffff;
-  border-color: var(--primary-hover);
-  transform: translateY(-2px);
-}
-
-.jobs-page .back-dashboard:visited {
-  color: #ffffff;
-}
-
-.jobs-page .back-dashboard:active {
-  color: #ffffff;
 }

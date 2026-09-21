@@ -3,22 +3,17 @@ import jsPDF from 'jspdf'
 import * as pdfjsLib from 'pdfjs-dist'
 import './ResumeAnalyzer.css'
 
-// PDF.js worker
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
 
 function ResumeAnalyzer() {
-
   const [resume, setResume] = useState(null)
   const [resumeText, setResumeText] = useState('')
   const [foundSkills, setFoundSkills] = useState([])
-
   const [resumeScore, setResumeScore] = useState(0)
   const [scoreMessage, setScoreMessage] = useState('')
-
   const [suggestions, setSuggestions] = useState([])
   const [strengths, setStrengths] = useState([])
-
   const [selectedRole, setSelectedRole] = useState('')
 
   const [roleMatch, setRoleMatch] = useState({
@@ -47,13 +42,7 @@ function ResumeAnalyzer() {
     contact: false
   })
 
-
-  // ==============================
-  // FIND SKILLS
-  // ==============================
-
   function findSkills(text) {
-
     const skillsList = [
       'HTML',
       'CSS',
@@ -81,18 +70,14 @@ function ResumeAnalyzer() {
 
     const lowerText = text.toLowerCase()
 
-    return skillsList.filter((skill) =>
-      lowerText.includes(skill.toLowerCase())
+    return skillsList.filter(skill =>
+      lowerText.includes(
+        skill.toLowerCase()
+      )
     )
   }
 
-
-  // ==============================
-  // FILE UPLOAD
-  // ==============================
-
   function handleFileChange(e) {
-
     const file = e.target.files[0]
 
     if (!file) {
@@ -100,25 +85,18 @@ function ResumeAnalyzer() {
     }
 
     if (file.type !== 'application/pdf') {
-
       alert('Please upload a PDF file only.')
-
       e.target.value = ''
-
       return
     }
 
     if (file.size > 5 * 1024 * 1024) {
-
       alert('Resume size should be less than 5 MB.')
-
       e.target.value = ''
-
       return
     }
 
     setResume(file)
-
     setResumeText('')
     setFoundSkills([])
     setResumeScore(0)
@@ -154,37 +132,23 @@ function ResumeAnalyzer() {
     })
   }
 
-
-  // ==============================
-  // ANALYZE RESUME
-  // ==============================
-
   async function handleAnalyze() {
-
     if (!resume) {
-
       alert('Please upload your resume first.')
-
       return
     }
 
     if (!selectedRole) {
-
       alert('Please select your target job role.')
-
       return
     }
 
     try {
-
       console.log('Starting Resume Analysis...')
 
-      // Convert PDF into ArrayBuffer
       const arrayBuffer =
         await resume.arrayBuffer()
 
-
-      // Load PDF
       const loadingTask =
         pdfjsLib.getDocument({
           data: arrayBuffer
@@ -192,7 +156,6 @@ function ResumeAnalyzer() {
 
       const pdf =
         await loadingTask.promise
-
 
       console.log(
         'PDF loaded successfully.'
@@ -203,11 +166,6 @@ function ResumeAnalyzer() {
         pdf.numPages
       )
 
-
-      // ==============================
-      // EXTRACT TEXT
-      // ==============================
-
       let text = ''
 
       for (
@@ -215,7 +173,6 @@ function ResumeAnalyzer() {
         pageNumber <= pdf.numPages;
         pageNumber++
       ) {
-
         const page =
           await pdf.getPage(pageNumber)
 
@@ -224,36 +181,25 @@ function ResumeAnalyzer() {
 
         const pageText =
           content.items
-            .map((item) => item.str)
+            .map(item => item.str)
             .join(' ')
 
         text += pageText + '\n'
       }
-
 
       console.log(
         'Resume Text:',
         text
       )
 
-
       if (!text.trim()) {
-
         alert(
           'No readable text found in this PDF. Please upload a text-based PDF.'
         )
-
         return
       }
 
-
       setResumeText(text)
-      localStorage.setItem('resumeText', text)
-
-
-      // ==============================
-      // FIND SKILLS
-      // ==============================
 
       const skills =
         findSkills(text)
@@ -265,21 +211,10 @@ function ResumeAnalyzer() {
         skills
       )
 
-
-      // ==============================
-      // LOWERCASE TEXT
-      // ==============================
-
       const lowerText =
         text.toLowerCase()
 
-
-      // ==============================
-      // DETECT SECTIONS
-      // ==============================
-
       const detectedSections = {
-
         education:
           lowerText.includes('education') ||
           lowerText.includes('b-tech') ||
@@ -310,23 +245,16 @@ function ResumeAnalyzer() {
           )
       }
 
-
       setSections(
         detectedSections
       )
-
 
       console.log(
         'Sections Found:',
         detectedSections
       )
 
-
-      
-      // JOB ROLE SKILLS
-      
       const roleSkills = {
-
         'Software Developer': [
           'C++',
           'Python',
@@ -365,65 +293,42 @@ function ResumeAnalyzer() {
         ]
       }
 
-
       const requiredSkills =
         roleSkills[selectedRole]
 
-
-     
-      // MATCHED SKILLS
-      
-
       const matchedSkills =
         requiredSkills.filter(
-          (requiredSkill) =>
+          requiredSkill =>
             skills.some(
-              (resumeSkill) =>
+              resumeSkill =>
                 resumeSkill.toLowerCase() ===
                 requiredSkill.toLowerCase()
             )
         )
-
-
-      // ==============================
-      // MISSING SKILLS
-      // ==============================
 
       const missingSkills =
         requiredSkills.filter(
-          (requiredSkill) =>
+          requiredSkill =>
             !skills.some(
-              (resumeSkill) =>
+              resumeSkill =>
                 resumeSkill.toLowerCase() ===
                 requiredSkill.toLowerCase()
             )
         )
 
-
-      // ==============================
-      // MATCH PERCENTAGE
-      // ==============================
-
       const matchPercentage =
         Math.round(
-          (matchedSkills.length /
-            requiredSkills.length) *
-            100
+          (
+            matchedSkills.length /
+            requiredSkills.length
+          ) * 100
         )
 
-
       setRoleMatch({
-
-        percentage:
-          matchPercentage,
-
-        matchedSkills:
-          matchedSkills,
-
-        missingSkills:
-          missingSkills
+        percentage: matchPercentage,
+        matchedSkills,
+        missingSkills
       })
-
 
       console.log(
         'Target Role:',
@@ -445,13 +350,7 @@ function ResumeAnalyzer() {
         matchPercentage
       )
 
-
-      // ==============================
-      // SMART SCORE
-      // ==============================
-
       const breakdown = {
-
         skills: 0,
         education: 0,
         projects: 0,
@@ -463,357 +362,244 @@ function ResumeAnalyzer() {
         content: 0
       }
 
-
-      // Skills - 20
       if (skills.length >= 10) {
-
         breakdown.skills = 20
-
-      }
-      else if (skills.length >= 5) {
-
+      } else if (skills.length >= 5) {
         breakdown.skills = 15
-
-      }
-      else if (skills.length > 0) {
-
+      } else if (skills.length > 0) {
         breakdown.skills = 8
       }
 
-
-      // Education - 15
       if (detectedSections.education) {
-
         breakdown.education = 15
       }
 
-
-      // Projects - 15
       if (detectedSections.projects) {
-
         breakdown.projects = 15
       }
 
-
-      // Experience - 15
       if (detectedSections.experience) {
-
         breakdown.experience = 15
       }
 
-
-      // Certifications - 10
       if (detectedSections.certifications) {
-
         breakdown.certifications = 10
       }
 
-
-      // Contact - 10
       if (detectedSections.contact) {
-
         breakdown.contact = 10
       }
 
-
-      // Objective - 5
       if (
         lowerText.includes('career objective') ||
         lowerText.includes('objective') ||
         lowerText.includes('summary') ||
         lowerText.includes('profile')
       ) {
-
         breakdown.objective = 5
       }
 
-
-      // GitHub - 5
-      if (
-        lowerText.includes('github')
-      ) {
-
+      if (lowerText.includes('github')) {
         breakdown.github = 5
       }
 
-
-      // Content - 5
-      if (
-        text.length > 1500
-      ) {
-
+      if (text.length > 1500) {
         breakdown.content = 5
       }
 
-
-      // ==============================
-      // TOTAL SCORE
-      // ==============================
-
       const score =
-        Object.values(
-          breakdown
-        ).reduce(
+        Object.values(breakdown).reduce(
           (total, value) =>
             total + value,
           0
         )
 
-
-     setScoreBreakdown(
-  breakdown
-)
-
-const finalScore = Math.round(
-  (score * 0.7) +
-  (matchPercentage * 0.3)
-)
-
-setResumeScore(
-  finalScore
-)
-
-localStorage.setItem(
-  'resumeScore',
-  finalScore
-)
-const token = localStorage.getItem('careerPilotToken')
-
-if (token) {
-  try {
-    const response = await fetch(
-      'http://127.0.0.1:5000/api/auth/resume',
-      {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + token
-        },
-        body: JSON.stringify({
-          resumeScore: finalScore,
-          resumeText: text,
-          selectedRole: selectedRole,
-          roleMatchPercentage: matchPercentage
-        })
-      }
-    )
-
-    const data = await response.json()
-
-    if (response.ok) {
-      console.log('Resume data saved to MongoDB successfully')
-    } else {
-      console.log(
-        'Resume data save failed:',
-        data.message
+      setScoreBreakdown(
+        breakdown
       )
-    }
-  } catch (error) {
-    console.log(
-      'Unable to save resume data to MongoDB:',
-      error.message
-    )
-  }
-}
 
-console.log(
-  'Resume Score:',
-  finalScore
-)
+      const finalScore =
+        Math.round(
+          (score * 0.7) +
+          (matchPercentage * 0.3)
+        )
 
-      // ==============================
-      // SCORE MESSAGE
-      // ==============================
+      setResumeScore(
+        finalScore
+      )
 
-      if (score >= 80) {
+      const token =
+        localStorage.getItem(
+          'careerPilotToken'
+        )
 
+      if (token) {
+        try {
+          const response =
+            await fetch(
+              'http://127.0.0.1:5000/api/auth/resume',
+              {
+                method: 'PUT',
+                headers: {
+                  'Content-Type':
+                    'application/json',
+                  Authorization:
+                    'Bearer ' + token
+                },
+                body: JSON.stringify({
+                  resumeScore:
+                    finalScore,
+                  resumeText: text,
+                  selectedRole,
+                  roleMatchPercentage:
+                    matchPercentage
+                })
+              }
+            )
+
+          const data =
+            await response.json()
+
+          if (response.ok) {
+            console.log(
+              'Resume data saved to MongoDB successfully'
+            )
+          } else {
+            console.log(
+              'Resume data save failed:',
+              data.message
+            )
+          }
+        } catch (error) {
+          console.log(
+            'Unable to save resume data to MongoDB:',
+            error.message
+          )
+        }
+      }
+
+      console.log(
+        'Resume Score:',
+        finalScore
+      )
+
+      if (finalScore >= 80) {
         setScoreMessage(
           'Excellent Resume! 🎉'
         )
-
-      }
-      else if (score >= 60) {
-
+      } else if (finalScore >= 60) {
         setScoreMessage(
           'Good Resume! 👍'
         )
-
-      }
-      else {
-
+      } else {
         setScoreMessage(
           'Needs Improvement 💡'
         )
       }
 
-
-      // ==============================
-      // SUGGESTIONS
-      // ==============================
-
       const newSuggestions = []
 
-
-      if (
-        !detectedSections.education
-      ) {
-
+      if (!detectedSections.education) {
         newSuggestions.push(
           'Add an Education section to your resume.'
         )
       }
 
-
-      if (
-        !detectedSections.projects
-      ) {
-
+      if (!detectedSections.projects) {
         newSuggestions.push(
           'Add Projects to showcase your practical skills.'
         )
       }
 
-
-      if (
-        !detectedSections.experience
-      ) {
-
+      if (!detectedSections.experience) {
         newSuggestions.push(
           'Add internship or work experience if available.'
         )
       }
 
-
-      if (
-        !detectedSections.certifications
-      ) {
-
+      if (!detectedSections.certifications) {
         newSuggestions.push(
           'Add relevant certifications or courses.'
         )
       }
 
-
-      if (
-        skills.length < 5
-      ) {
-
+      if (skills.length < 5) {
         newSuggestions.push(
           'Add more relevant technical skills.'
         )
       }
 
-
-      if (
-        !detectedSections.contact
-      ) {
-
+      if (!detectedSections.contact) {
         newSuggestions.push(
           'Add proper contact details such as email, GitHub or LinkedIn.'
         )
       }
-
 
       if (
         !lowerText.includes('objective') &&
         !lowerText.includes('summary') &&
         !lowerText.includes('profile')
       ) {
-
         newSuggestions.push(
           'Add a short career objective or professional summary.'
         )
       }
 
-
       setSuggestions(
         newSuggestions
       )
 
-
-      // ==============================
-      // STRENGTHS
-      // ==============================
-
       const newStrengths = []
 
-
-      if (
-        skills.length >= 10
-      ) {
-
+      if (skills.length >= 10) {
         newStrengths.push(
           'Strong technical skill set detected.'
         )
       }
 
-
-      if (
-        detectedSections.projects
-      ) {
-
+      if (detectedSections.projects) {
         newStrengths.push(
           'Projects are included in your resume.'
         )
       }
 
-
-      if (
-        detectedSections.experience
-      ) {
-
+      if (detectedSections.experience) {
         newStrengths.push(
           'Experience section is present.'
         )
       }
 
-
-      if (
-        detectedSections.certifications
-      ) {
-
+      if (detectedSections.certifications) {
         newStrengths.push(
           'Certifications strengthen your profile.'
         )
       }
 
-
-      if (
-        detectedSections.contact
-      ) {
-
+      if (detectedSections.contact) {
         newStrengths.push(
           'Contact information is properly included.'
         )
       }
-
 
       if (
         lowerText.includes('objective') ||
         lowerText.includes('summary') ||
         lowerText.includes('profile')
       ) {
-
         newStrengths.push(
           'Career objective or professional summary is present.'
         )
       }
 
-
-      if (
-        lowerText.includes('github')
-      ) {
-
+      if (lowerText.includes('github')) {
         newStrengths.push(
           'GitHub profile is included.'
         )
       }
 
-
       setStrengths(
         newStrengths
       )
-
 
       console.log(
         'Suggestions:',
@@ -825,14 +611,10 @@ console.log(
         newStrengths
       )
 
-
       alert(
         'Resume analyzed successfully! 🎉'
       )
-
-    }
-    catch (error) {
-
+    } catch (error) {
       console.error(
         'Resume Analysis Error:',
         error
@@ -844,16 +626,8 @@ console.log(
     }
   }
 
-
-  // ==============================
-  // DOWNLOAD REPORT
-  // ==============================
-
   function downloadReport() {
-
-    const doc =
-      new jsPDF()
-
+    const doc = new jsPDF()
 
     doc.setFontSize(20)
 
@@ -863,7 +637,6 @@ console.log(
       20
     )
 
-
     doc.setFontSize(14)
 
     doc.text(
@@ -871,7 +644,6 @@ console.log(
       20,
       35
     )
-
 
     doc.setFontSize(12)
 
@@ -881,13 +653,11 @@ console.log(
       45
     )
 
-
     doc.text(
       `Target Role: ${selectedRole}`,
       20,
       55
     )
-
 
     doc.text(
       `Role Match: ${roleMatch.percentage}%`,
@@ -895,11 +665,8 @@ console.log(
       65
     )
 
-
     let y = 80
 
-
-    // Skills
     doc.setFontSize(14)
 
     doc.text(
@@ -910,41 +677,29 @@ console.log(
 
     y += 10
 
-
-    foundSkills.forEach(
-      (skill) => {
-
-        if (y > 270) {
-
-          doc.addPage()
-
-          y = 20
-        }
-
-        doc.setFontSize(12)
-
-        doc.text(
-          `- ${skill}`,
-          25,
-          y
-        )
-
-        y += 7
+    foundSkills.forEach(skill => {
+      if (y > 270) {
+        doc.addPage()
+        y = 20
       }
-    )
 
+      doc.setFontSize(12)
 
-    // Matched Skills
+      doc.text(
+        `- ${skill}`,
+        25,
+        y
+      )
+
+      y += 7
+    })
+
     y += 5
 
-
     if (y > 260) {
-
       doc.addPage()
-
       y = 20
     }
-
 
     doc.setFontSize(14)
 
@@ -956,14 +711,10 @@ console.log(
 
     y += 10
 
-
     roleMatch.matchedSkills.forEach(
-      (skill) => {
-
+      skill => {
         if (y > 270) {
-
           doc.addPage()
-
           y = 20
         }
 
@@ -979,18 +730,12 @@ console.log(
       }
     )
 
-
-    // Missing Skills
     y += 5
 
-
     if (y > 260) {
-
       doc.addPage()
-
       y = 20
     }
-
 
     doc.setFontSize(14)
 
@@ -1002,14 +747,10 @@ console.log(
 
     y += 10
 
-
     roleMatch.missingSkills.forEach(
-      (skill) => {
-
+      skill => {
         if (y > 270) {
-
           doc.addPage()
-
           y = 20
         }
 
@@ -1025,18 +766,12 @@ console.log(
       }
     )
 
-
-    // Strengths
     y += 5
 
-
     if (y > 260) {
-
       doc.addPage()
-
       y = 20
     }
-
 
     doc.setFontSize(14)
 
@@ -1048,14 +783,10 @@ console.log(
 
     y += 10
 
-
     strengths.forEach(
-      (strength) => {
-
+      strength => {
         if (y > 270) {
-
           doc.addPage()
-
           y = 20
         }
 
@@ -1071,18 +802,12 @@ console.log(
       }
     )
 
-
-    // Suggestions
     y += 5
 
-
     if (y > 260) {
-
       doc.addPage()
-
       y = 20
     }
-
 
     doc.setFontSize(14)
 
@@ -1094,14 +819,10 @@ console.log(
 
     y += 10
 
-
     suggestions.forEach(
-      (suggestion) => {
-
+      suggestion => {
         if (y > 270) {
-
           doc.addPage()
-
           y = 20
         }
 
@@ -1117,19 +838,12 @@ console.log(
       }
     )
 
-
     doc.save(
       'CareerPilot-Resume-Report.pdf'
     )
   }
 
-
-  // ==============================
-  // UI
-  // ==============================
-
   return (
-
     <div className="resume-page">
 
       <div className="resume-container">
@@ -1141,9 +855,6 @@ console.log(
         <p className="resume-subtitle">
           Upload your resume and get insights to improve it.
         </p>
-
-
-        {/* UPLOAD */}
 
         <div className="upload-box">
 
@@ -1159,24 +870,17 @@ console.log(
             Upload your PDF resume to analyze it.
           </p>
 
-
           <input
             type="file"
             accept=".pdf"
             onChange={handleFileChange}
           />
 
-
           {resume && (
-
             <p className="file-name">
               Selected: {resume.name}
             </p>
-
           )}
-
-
-          {/* JOB ROLE */}
 
           <div className="role-box">
 
@@ -1184,10 +888,9 @@ console.log(
               🎯 Select Your Target Job Role
             </h3>
 
-
             <select
               value={selectedRole}
-              onChange={(e) =>
+              onChange={e =>
                 setSelectedRole(
                   e.target.value
                 )
@@ -1218,9 +921,6 @@ console.log(
 
           </div>
 
-
-          {/* ANALYZE */}
-
           <button
             className="analyze-btn"
             onClick={handleAnalyze}
@@ -1228,11 +928,7 @@ console.log(
             Analyze Resume →
           </button>
 
-
-          {/* SCORE */}
-
           {resumeScore > 0 && (
-
             <div className="score-box">
 
               <h2>
@@ -1251,7 +947,6 @@ console.log(
                 Your resume has been analyzed successfully.
               </p>
 
-
               <button
                 className="download-btn"
                 onClick={downloadReport}
@@ -1260,20 +955,14 @@ console.log(
               </button>
 
             </div>
-
           )}
 
-
-          {/* SCORE BREAKDOWN */}
-
           {resumeScore > 0 && (
-
             <div className="breakdown-box">
 
               <h3>
                 Score Breakdown 📊
               </h3>
-
 
               <ScoreItem
                 label="💻 Skills"
@@ -1330,125 +1019,97 @@ console.log(
               />
 
             </div>
-
           )}
 
+          {resumeText &&
+            selectedRole && (
+              <div className="role-match-box">
 
-          {/* JOB ROLE MATCHING */}
+                <h3>
+                  🎯 Job Role Matching
+                </h3>
 
-          {resumeText && selectedRole && (
+                <p>
+                  Selected Role:
+                  <strong>
+                    {' '}{selectedRole}
+                  </strong>
+                </p>
 
-            <div className="role-match-box">
+                <div className="match-number">
+                  {roleMatch.percentage}%
+                </div>
 
-              <h3>
-                🎯 Job Role Matching
-              </h3>
+                <p>
+                  Resume Match
+                </p>
 
-              <p>
-                Selected Role:
-                <strong>
-                  {' '}{selectedRole}
-                </strong>
-              </p>
+                <div className="progress-bar">
 
+                  <div
+                    className="progress-fill"
+                    style={{
+                      width:
+                        `${roleMatch.percentage}%`
+                    }}
+                  ></div>
 
-              <div className="match-number">
-                {roleMatch.percentage}%
-              </div>
+                </div>
 
+                <h4>
+                  Matched Skills ✅
+                </h4>
 
-              <p>
-                Resume Match
-              </p>
+                <div className="skills-list">
 
-
-              <div className="progress-bar">
-
-                <div
-                  className="progress-fill"
-                  style={{
-                    width:
-                      `${roleMatch.percentage}%`
-                  }}
-                ></div>
-
-              </div>
-
-
-              <h4>
-                Matched Skills ✅
-              </h4>
-
-
-              <div className="skills-list">
-
-                {roleMatch.matchedSkills.length > 0 ? (
-
-                  roleMatch.matchedSkills.map(
-                    (skill, index) => (
-
-                      <span
-                        className="skill-tag"
-                        key={index}
-                      >
-                        ✓ {skill}
-                      </span>
-
+                  {roleMatch.matchedSkills.length > 0 ? (
+                    roleMatch.matchedSkills.map(
+                      (skill, index) => (
+                        <span
+                          className="skill-tag"
+                          key={index}
+                        >
+                          ✓ {skill}
+                        </span>
+                      )
                     )
-                  )
+                  ) : (
+                    <p>
+                      No matched skills found.
+                    </p>
+                  )}
 
-                ) : (
+                </div>
 
-                  <p>
-                    No matched skills found.
-                  </p>
+                <h4>
+                  Missing Skills ⚠️
+                </h4>
 
-                )}
+                <div className="skills-list">
 
-              </div>
-
-
-              <h4>
-                Missing Skills ⚠️
-              </h4>
-
-
-              <div className="skills-list">
-
-                {roleMatch.missingSkills.length > 0 ? (
-
-                  roleMatch.missingSkills.map(
-                    (skill, index) => (
-
-                      <span
-                        className="missing-skill"
-                        key={index}
-                      >
-                        ⚠️ {skill}
-                      </span>
-
+                  {roleMatch.missingSkills.length > 0 ? (
+                    roleMatch.missingSkills.map(
+                      (skill, index) => (
+                        <span
+                          className="missing-skill"
+                          key={index}
+                        >
+                          ⚠️ {skill}
+                        </span>
+                      )
                     )
-                  )
+                  ) : (
+                    <p>
+                      Great! No major missing skills.
+                    </p>
+                  )}
 
-                ) : (
-
-                  <p>
-                    Great! No major missing skills.
-                  </p>
-
-                )}
+                </div>
 
               </div>
-
-            </div>
-
-          )}
-
-
-          {/* RESUME TEXT */}
+            )}
 
           {resumeText && (
-
             <div className="resume-text-box">
 
               <h3>
@@ -1460,53 +1121,39 @@ console.log(
               </p>
 
             </div>
-
           )}
 
-
-          {/* SKILLS */}
-
           {foundSkills.length > 0 && (
-
             <div className="skills-box">
 
               <h3>
                 Skills Found
               </h3>
 
-
               <div className="skills-list">
 
                 {foundSkills.map(
                   (skill, index) => (
-
                     <span
                       className="skill-tag"
                       key={index}
                     >
                       ✓ {skill}
                     </span>
-
                   )
                 )}
 
               </div>
 
             </div>
-
           )}
 
-
-          {/* SECTIONS */}
-
           {resumeText && (
-
             <div className="sections-box">
 
               <h3>
                 Resume Sections
               </h3>
-
 
               <div className="section-list">
 
@@ -1543,77 +1190,56 @@ console.log(
               </div>
 
             </div>
-
           )}
-
-
-          {/* STRENGTHS */}
 
           {resumeText &&
             strengths.length > 0 && (
-
               <div className="strengths-box">
 
                 <h3>
                   Resume Strengths 💪
                 </h3>
 
-
                 <div className="strengths-list">
 
                   {strengths.map(
                     (strength, index) => (
-
                       <p key={index}>
                         ✅ {strength}
                       </p>
-
                     )
                   )}
 
                 </div>
 
               </div>
-
             )}
-
-
-          {/* SUGGESTIONS */}
 
           {resumeText &&
             suggestions.length > 0 && (
-
               <div className="suggestions-box">
 
                 <h3>
                   Improvement Suggestions 💡
                 </h3>
 
-
                 <div className="suggestions-list">
 
                   {suggestions.map(
                     (suggestion, index) => (
-
                       <p key={index}>
                         ⚠️ {suggestion}
                       </p>
-
                     )
                   )}
 
                 </div>
 
               </div>
-
             )}
-
-
-          {/* NO SUGGESTIONS */}
 
           {resumeText &&
             suggestions.length === 0 && (
-
               <div className="suggestions-box">
 
                 <h3>
@@ -1625,7 +1251,6 @@ console.log(
                 </p>
 
               </div>
-
             )}
 
         </div>
@@ -1636,22 +1261,15 @@ console.log(
   )
 }
 
-
-// ==============================
-// SCORE ITEM COMPONENT
-// ==============================
-
 function ScoreItem({
   label,
   value,
   max
 }) {
-
   const percentage =
     (value / max) * 100
 
   return (
-
     <div className="score-item">
 
       <div className="score-label">
@@ -1665,7 +1283,6 @@ function ScoreItem({
         </span>
 
       </div>
-
 
       <div className="progress-bar">
 
@@ -1682,6 +1299,5 @@ function ScoreItem({
     </div>
   )
 }
-
 
 export default ResumeAnalyzer
