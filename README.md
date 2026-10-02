@@ -5,6 +5,8 @@ CareerPilot is a full-stack career guidance platform designed to help students p
 ## Live Project
 
 https://career-pilot-mocha-phi.vercel.app/
+http://localhost:5173/dashboard
+http://localhost:5173/login
 
 ## Features
 
