@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import './Progress.css'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000'
+
 function Progress() {
   const [profile, setProfile] = useState(null)
   const [resumeScore, setResumeScore] = useState(0)
@@ -25,7 +27,7 @@ function Progress() {
         }
 
         const profileResponse = await fetch(
-          'http://127.0.0.1:5000/api/auth/profile',
+          `${API_URL}/api/auth/profile`,
           {
             headers
           }
@@ -42,7 +44,7 @@ function Progress() {
 
           setProfile(user)
           setResumeScore(
-            user.resumeScore || 0
+            Number(user.resumeScore || 0)
           )
           setDsaProblems(
             user.dsaProblems || []
@@ -51,7 +53,7 @@ function Progress() {
 
         const interviewResponse =
           await fetch(
-            'http://127.0.0.1:5000/api/auth/mock-interviews',
+            `${API_URL}/api/auth/mock-interviews`,
             {
               headers
             }
@@ -302,12 +304,14 @@ function Progress() {
             </div>
 
             <div className="progress-bar">
+
               <div
                 className="progress-fill"
                 style={{
                   width: `${profileCompletion}%`
                 }}
               />
+
             </div>
 
           </div>
@@ -347,12 +351,14 @@ function Progress() {
             </div>
 
             <div className="progress-bar">
+
               <div
                 className="progress-fill"
                 style={{
                   width: `${resumeScore}%`
                 }}
               />
+
             </div>
 
           </div>
@@ -392,12 +398,14 @@ function Progress() {
             </div>
 
             <div className="progress-bar">
+
               <div
                 className="progress-fill"
                 style={{
                   width: `${dsaProgress}%`
                 }}
               />
+
             </div>
 
           </div>
