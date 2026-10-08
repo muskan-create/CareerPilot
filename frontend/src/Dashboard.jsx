@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import './Dashboard.css'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000'
+
 function Dashboard() {
   const [profile, setProfile] = useState(null)
   const [resumeScore, setResumeScore] = useState(0)
@@ -21,7 +23,7 @@ function Dashboard() {
         }
 
         const profileResponse = await fetch(
-          'http://127.0.0.1:5000/api/auth/profile',
+          `${API_URL}/api/auth/profile`,
           {
             headers
           }
@@ -53,18 +55,16 @@ function Dashboard() {
         }
 
         const interviewResponse = await fetch(
-          'http://127.0.0.1:5000/api/auth/mock-interviews',
+          `${API_URL}/api/auth/mock-interviews`,
           {
             headers
           }
         )
 
-        const interviewData =
-          await interviewResponse.json()
+        const interviewData = await interviewResponse.json()
 
         if (interviewResponse.ok) {
-          const interviews =
-            interviewData.mockInterviews || []
+          const interviews = interviewData.mockInterviews || []
 
           setMockInterviewCount(interviews.length)
 
@@ -83,16 +83,10 @@ function Dashboard() {
 
     loadDashboardData()
 
-    window.addEventListener(
-      'focus',
-      loadDashboardData
-    )
+    window.addEventListener('focus', loadDashboardData)
 
     return () => {
-      window.removeEventListener(
-        'focus',
-        loadDashboardData
-      )
+      window.removeEventListener('focus', loadDashboardData)
     }
   }, [])
 
