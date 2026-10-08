@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import './DSATracker.css'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000'
+
 function DSATracker() {
   const [problems, setProblems] = useState([])
   const [problemName, setProblemName] = useState('')
@@ -17,7 +19,7 @@ function DSATracker() {
         }
 
         const response = await fetch(
-          'http://127.0.0.1:5000/api/auth/dsa',
+          `${API_URL}/api/auth/dsa`,
           {
             headers: {
               Authorization: 'Bearer ' + token
@@ -71,7 +73,7 @@ function DSATracker() {
       ]
 
       const response = await fetch(
-        'http://127.0.0.1:5000/api/auth/dsa',
+        `${API_URL}/api/auth/dsa`,
         {
           method: 'PUT',
           headers: {
@@ -137,7 +139,7 @@ function DSATracker() {
       }
 
       const response = await fetch(
-        'http://127.0.0.1:5000/api/auth/dsa',
+        `${API_URL}/api/auth/dsa`,
         {
           method: 'PUT',
           headers: {
@@ -191,7 +193,7 @@ function DSATracker() {
       }
 
       const response = await fetch(
-        'http://127.0.0.1:5000/api/auth/dsa',
+        `${API_URL}/api/auth/dsa`,
         {
           method: 'PUT',
           headers: {
