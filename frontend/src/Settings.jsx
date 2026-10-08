@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import './Settings.css'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000'
+
 function Settings() {
   const [theme, setTheme] = useState(() => {
     return localStorage.getItem('careerPilotTheme') || 'light'
@@ -51,7 +53,7 @@ function Settings() {
       }
 
       const response = await fetch(
-        'http://127.0.0.1:5000/api/auth/change-password',
+        `${API_URL}/api/auth/change-password`,
         {
           method: 'PUT',
           headers: {
@@ -77,7 +79,7 @@ function Settings() {
       setCurrentPassword('')
       setNewPassword('')
       setConfirmPassword('')
-    } catch  {
+    } catch {
       setPasswordError('Unable to connect to server.')
     } finally {
       setChangingPassword(false)
