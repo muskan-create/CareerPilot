@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react'
 import './MockInterview.css'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000'
+
 function MockInterview() {
   const [interviewType, setInterviewType] = useState('HR')
   const [started, setStarted] = useState(false)
@@ -118,16 +120,14 @@ function MockInterview() {
   useEffect(() => {
     async function loadMockInterviews() {
       try {
-        const token = localStorage.getItem(
-          'careerPilotToken'
-        )
+        const token = localStorage.getItem('careerPilotToken')
 
         if (!token) {
           return
         }
 
         const response = await fetch(
-          'http://127.0.0.1:5000/api/auth/mock-interviews',
+          `${API_URL}/api/auth/mock-interviews`,
           {
             headers: {
               Authorization: 'Bearer ' + token
@@ -154,13 +154,11 @@ function MockInterview() {
   }, [])
 
   function calculateScore(userAnswer) {
-    const cleanAnswer =
-      userAnswer.trim().toLowerCase()
+    const cleanAnswer = userAnswer.trim().toLowerCase()
 
-    const words =
-      cleanAnswer
-        .split(/\s+/)
-        .filter(Boolean)
+    const words = cleanAnswer
+      .split(/\s+/)
+      .filter(Boolean)
 
     const wordCount = words.length
 
@@ -171,9 +169,8 @@ function MockInterview() {
       keywords[currentQuestionText] || []
 
     const matchedKeywords =
-      questionKeywords.filter(
-        keyword =>
-          cleanAnswer.includes(keyword)
+      questionKeywords.filter(keyword =>
+        cleanAnswer.includes(keyword)
       )
 
     const keywordScore =
@@ -253,19 +250,12 @@ function MockInterview() {
       return
     }
 
-    const currentScore =
-      calculateScore(answer)
+    const currentScore = calculateScore(answer)
 
     setScore(currentScore)
+
     setFeedback(
       getFeedback(currentScore)
-    )
-
-    setQuestionScores(
-      previousScores => [
-        ...previousScores,
-        currentScore
-      ]
     )
 
     setShowFeedback(true)
@@ -286,7 +276,7 @@ function MockInterview() {
       }
 
       const response = await fetch(
-        'http://127.0.0.1:5000/api/auth/mock-interviews',
+        `${API_URL}/api/auth/mock-interviews`,
         {
           method: 'POST',
           headers: {
@@ -374,7 +364,7 @@ function MockInterview() {
             total + value,
           0
         ) /
-          updatedQuestionScores.length
+        updatedQuestionScores.length
       )
 
       const saved =
@@ -487,7 +477,9 @@ function MockInterview() {
                     : 'interview-option'
                 }
                 onClick={() =>
-                  setInterviewType('Mixed')
+                  setInterviewType(
+                    'Mixed'
+                  )
                 }
               >
                 🎯 Mixed Interview
@@ -561,6 +553,7 @@ function MockInterview() {
 
             {showResult ? (
               <>
+
                 <h2>
                   Interview Completed 🎉
                 </h2>
@@ -597,11 +590,13 @@ function MockInterview() {
                 >
                   Start New Interview →
                 </button>
+
               </>
 
             ) : !showFeedback ? (
 
               <>
+
                 <h2>
                   {questions[interviewType][currentQuestion]}
                 </h2>
@@ -621,11 +616,13 @@ function MockInterview() {
                 >
                   Submit Answer →
                 </button>
+
               </>
 
             ) : (
 
               <>
+
                 <h2>
                   Answer Submitted ✓
                 </h2>
@@ -653,6 +650,7 @@ function MockInterview() {
                 </button>
 
               </>
+
             )}
 
           </div>
