@@ -3,6 +3,8 @@ import jsPDF from 'jspdf'
 import * as pdfjsLib from 'pdfjs-dist'
 import './ResumeAnalyzer.css'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000'
+
 pdfjsLib.GlobalWorkerOptions.workerSrc =
   `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`
 
@@ -71,9 +73,7 @@ function ResumeAnalyzer() {
     const lowerText = text.toLowerCase()
 
     return skillsList.filter(skill =>
-      lowerText.includes(
-        skill.toLowerCase()
-      )
+      lowerText.includes(skill.toLowerCase())
     )
   }
 
@@ -146,25 +146,16 @@ function ResumeAnalyzer() {
     try {
       console.log('Starting Resume Analysis...')
 
-      const arrayBuffer =
-        await resume.arrayBuffer()
+      const arrayBuffer = await resume.arrayBuffer()
 
-      const loadingTask =
-        pdfjsLib.getDocument({
-          data: arrayBuffer
-        })
+      const loadingTask = pdfjsLib.getDocument({
+        data: arrayBuffer
+      })
 
-      const pdf =
-        await loadingTask.promise
+      const pdf = await loadingTask.promise
 
-      console.log(
-        'PDF loaded successfully.'
-      )
-
-      console.log(
-        'Total Pages:',
-        pdf.numPages
-      )
+      console.log('PDF loaded successfully.')
+      console.log('Total Pages:', pdf.numPages)
 
       let text = ''
 
@@ -173,24 +164,17 @@ function ResumeAnalyzer() {
         pageNumber <= pdf.numPages;
         pageNumber++
       ) {
-        const page =
-          await pdf.getPage(pageNumber)
+        const page = await pdf.getPage(pageNumber)
+        const content = await page.getTextContent()
 
-        const content =
-          await page.getTextContent()
-
-        const pageText =
-          content.items
-            .map(item => item.str)
-            .join(' ')
+        const pageText = content.items
+          .map(item => item.str)
+          .join(' ')
 
         text += pageText + '\n'
       }
 
-      console.log(
-        'Resume Text:',
-        text
-      )
+      console.log('Resume Text:', text)
 
       if (!text.trim()) {
         alert(
@@ -201,18 +185,13 @@ function ResumeAnalyzer() {
 
       setResumeText(text)
 
-      const skills =
-        findSkills(text)
+      const skills = findSkills(text)
 
       setFoundSkills(skills)
 
-      console.log(
-        'Skills Found:',
-        skills
-      )
+      console.log('Skills Found:', skills)
 
-      const lowerText =
-        text.toLowerCase()
+      const lowerText = text.toLowerCase()
 
       const detectedSections = {
         education:
@@ -245,14 +224,9 @@ function ResumeAnalyzer() {
           )
       }
 
-      setSections(
-        detectedSections
-      )
+      setSections(detectedSections)
 
-      console.log(
-        'Sections Found:',
-        detectedSections
-      )
+      console.log('Sections Found:', detectedSections)
 
       const roleSkills = {
         'Software Developer': [
@@ -293,36 +267,32 @@ function ResumeAnalyzer() {
         ]
       }
 
-      const requiredSkills =
-        roleSkills[selectedRole]
+      const requiredSkills = roleSkills[selectedRole]
 
-      const matchedSkills =
-        requiredSkills.filter(
-          requiredSkill =>
-            skills.some(
-              resumeSkill =>
-                resumeSkill.toLowerCase() ===
-                requiredSkill.toLowerCase()
-            )
-        )
+      const matchedSkills = requiredSkills.filter(
+        requiredSkill =>
+          skills.some(
+            resumeSkill =>
+              resumeSkill.toLowerCase() ===
+              requiredSkill.toLowerCase()
+          )
+      )
 
-      const missingSkills =
-        requiredSkills.filter(
-          requiredSkill =>
-            !skills.some(
-              resumeSkill =>
-                resumeSkill.toLowerCase() ===
-                requiredSkill.toLowerCase()
-            )
-        )
+      const missingSkills = requiredSkills.filter(
+        requiredSkill =>
+          !skills.some(
+            resumeSkill =>
+              resumeSkill.toLowerCase() ===
+              requiredSkill.toLowerCase()
+          )
+      )
 
-      const matchPercentage =
-        Math.round(
-          (
-            matchedSkills.length /
-            requiredSkills.length
-          ) * 100
-        )
+      const matchPercentage = Math.round(
+        (
+          matchedSkills.length /
+          requiredSkills.length
+        ) * 100
+      )
 
       setRoleMatch({
         percentage: matchPercentage,
@@ -330,25 +300,10 @@ function ResumeAnalyzer() {
         missingSkills
       })
 
-      console.log(
-        'Target Role:',
-        selectedRole
-      )
-
-      console.log(
-        'Matched Skills:',
-        matchedSkills
-      )
-
-      console.log(
-        'Missing Skills:',
-        missingSkills
-      )
-
-      console.log(
-        'Role Match:',
-        matchPercentage
-      )
+      console.log('Target Role:', selectedRole)
+      console.log('Matched Skills:', matchedSkills)
+      console.log('Missing Skills:', missingSkills)
+      console.log('Role Match:', matchPercentage)
 
       const breakdown = {
         skills: 0,
@@ -407,62 +362,53 @@ function ResumeAnalyzer() {
         breakdown.content = 5
       }
 
-      const score =
-        Object.values(breakdown).reduce(
-          (total, value) =>
-            total + value,
-          0
-        )
-
-      setScoreBreakdown(
-        breakdown
+      const score = Object.values(breakdown).reduce(
+        (total, value) => total + value,
+        0
       )
 
-      const finalScore =
-        Math.round(
-          (score * 0.7) +
-          (matchPercentage * 0.3)
-        )
+      setScoreBreakdown(breakdown)
 
-      setResumeScore(
-        finalScore
+      const finalScore = Math.round(
+        (score * 0.7) +
+        (matchPercentage * 0.3)
       )
 
-      const token =
-        localStorage.getItem(
-          'careerPilotToken'
-        )
+      setResumeScore(finalScore)
+
+      const token = localStorage.getItem(
+        'careerPilotToken'
+      )
 
       if (token) {
         try {
-          const response =
-            await fetch(
-              'http://127.0.0.1:5000/api/auth/resume',
-              {
-                method: 'PUT',
-                headers: {
-                  'Content-Type':
-                    'application/json',
-                  Authorization:
-                    'Bearer ' + token
-                },
-                body: JSON.stringify({
-                  resumeScore:
-                    finalScore,
-                  resumeText: text,
-                  selectedRole,
-                  roleMatchPercentage:
-                    matchPercentage
-                })
-              }
-            )
+          const response = await fetch(
+            `${API_URL}/api/auth/resume`,
+            {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: 'Bearer ' + token
+              },
+              body: JSON.stringify({
+                resumeScore: finalScore,
+                resumeText: text,
+                selectedRole,
+                roleMatchPercentage: matchPercentage
+              })
+            }
+          )
 
-          const data =
-            await response.json()
+          const data = await response.json()
 
           if (response.ok) {
             console.log(
               'Resume data saved to MongoDB successfully'
+            )
+
+            localStorage.setItem(
+              'resumeScore',
+              String(finalScore)
             )
           } else {
             console.log(
@@ -478,23 +424,14 @@ function ResumeAnalyzer() {
         }
       }
 
-      console.log(
-        'Resume Score:',
-        finalScore
-      )
+      console.log('Resume Score:', finalScore)
 
       if (finalScore >= 80) {
-        setScoreMessage(
-          'Excellent Resume! 🎉'
-        )
+        setScoreMessage('Excellent Resume! 🎉')
       } else if (finalScore >= 60) {
-        setScoreMessage(
-          'Good Resume! 👍'
-        )
+        setScoreMessage('Good Resume! 👍')
       } else {
-        setScoreMessage(
-          'Needs Improvement 💡'
-        )
+        setScoreMessage('Needs Improvement 💡')
       }
 
       const newSuggestions = []
@@ -545,9 +482,7 @@ function ResumeAnalyzer() {
         )
       }
 
-      setSuggestions(
-        newSuggestions
-      )
+      setSuggestions(newSuggestions)
 
       const newStrengths = []
 
@@ -597,23 +532,12 @@ function ResumeAnalyzer() {
         )
       }
 
-      setStrengths(
-        newStrengths
-      )
+      setStrengths(newStrengths)
 
-      console.log(
-        'Suggestions:',
-        newSuggestions
-      )
+      console.log('Suggestions:', newSuggestions)
+      console.log('Strengths:', newStrengths)
 
-      console.log(
-        'Strengths:',
-        newStrengths
-      )
-
-      alert(
-        'Resume analyzed successfully! 🎉'
-      )
+      alert('Resume analyzed successfully! 🎉')
     } catch (error) {
       console.error(
         'Resume Analysis Error:',
@@ -891,9 +815,7 @@ function ResumeAnalyzer() {
             <select
               value={selectedRole}
               onChange={e =>
-                setSelectedRole(
-                  e.target.value
-                )
+                setSelectedRole(e.target.value)
               }
             >
 
