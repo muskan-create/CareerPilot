@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react'
 import './JobRecommendations.css'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000'
+
 function JobRecommendations() {
- const [profile, setProfile] = useState({
-  careerGoal: '',
-  skills: '',
-  resumeText: ''
-})
+  const [profile, setProfile] = useState({
+    careerGoal: '',
+    skills: '',
+    resumeText: ''
+  })
+
   const [preferences, setPreferences] = useState({
     jobRole: '',
     location: '',
@@ -17,43 +20,53 @@ function JobRecommendations() {
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
-  const token = localStorage.getItem('careerPilotToken')
-
   useEffect(() => {
     async function loadData() {
+      const token = localStorage.getItem(
+        'careerPilotToken'
+      )
+
       if (!token) {
         setLoading(false)
         return
       }
 
       try {
-        const profileResponse = await fetch(
-          'http://127.0.0.1:5000/api/auth/profile',
-          {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
-          }
-        )
-
-        const profileData = await profileResponse.json()
-
-        if (profileResponse.ok && profileData.user) {
-          setProfile({
-  careerGoal: profileData.user.careerGoal || '',
-  skills: profileData.user.skills || '',
-  resumeText: profileData.user.resumeText || ''
-})
+        const headers = {
+          Authorization: `Bearer ${token}`
         }
 
-        const preferencesResponse = await fetch(
-          'http://127.0.0.1:5000/api/auth/job-preferences',
+        const profileResponse = await fetch(
+          `${API_URL}/api/auth/profile`,
           {
-            headers: {
-              Authorization: `Bearer ${token}`
-            }
+            headers
           }
         )
+
+        const profileData =
+          await profileResponse.json()
+
+        if (
+          profileResponse.ok &&
+          profileData.user
+        ) {
+          setProfile({
+            careerGoal:
+              profileData.user.careerGoal || '',
+            skills:
+              profileData.user.skills || '',
+            resumeText:
+              profileData.user.resumeText || ''
+          })
+        }
+
+        const preferencesResponse =
+          await fetch(
+            `${API_URL}/api/auth/job-preferences`,
+            {
+              headers
+            }
+          )
 
         const preferencesData =
           await preferencesResponse.json()
@@ -72,16 +85,23 @@ function JobRecommendations() {
           })
         }
       } catch (error) {
-        console.log('Job data loading error:', error)
+        console.log(
+          'Job data loading error:',
+          error
+        )
       } finally {
         setLoading(false)
       }
     }
 
     loadData()
-  }, [token])
+  }, [])
 
   const savePreferences = async () => {
+    const token = localStorage.getItem(
+      'careerPilotToken'
+    )
+
     if (!token) {
       setMessage('Please login first.')
       return
@@ -92,7 +112,7 @@ function JobRecommendations() {
 
     try {
       const response = await fetch(
-        'http://127.0.0.1:5000/api/auth/job-preferences',
+        `${API_URL}/api/auth/job-preferences`,
         {
           method: 'PUT',
           headers: {
@@ -106,14 +126,36 @@ function JobRecommendations() {
       const data = await response.json()
 
       if (!response.ok) {
-        setMessage(data.message || 'Unable to save preferences.')
+        setMessage(
+          data.message ||
+          'Unable to save preferences.'
+        )
         return
       }
 
-      setMessage('Job preferences saved successfully.')
+      if (data.jobPreferences) {
+        setPreferences({
+          jobRole:
+            data.jobPreferences.jobRole || '',
+          location:
+            data.jobPreferences.location || '',
+          jobType:
+            data.jobPreferences.jobType || ''
+        })
+      }
+
+      setMessage(
+        'Job preferences saved successfully.'
+      )
     } catch (error) {
-      console.log('Job preferences save error:', error)
-      setMessage('Unable to connect to server.')
+      console.log(
+        'Job preferences save error:',
+        error
+      )
+
+      setMessage(
+        'Unable to connect to server.'
+      )
     } finally {
       setSaving(false)
     }
@@ -122,11 +164,14 @@ function JobRecommendations() {
   const profileSkills = profile.skills
     ? profile.skills
         .split(',')
-        .map(skill => skill.trim().toLowerCase())
+        .map(skill =>
+          skill.trim().toLowerCase()
+        )
         .filter(Boolean)
     : []
 
-  const savedResumeText = profile.resumeText || ''
+  const savedResumeText =
+    profile.resumeText || ''
 
   const resumeSkillsList = [
     'HTML',
@@ -153,13 +198,18 @@ function JobRecommendations() {
     'Excel'
   ]
 
-  const resumeSkills = resumeSkillsList
-    .filter(skill =>
-      savedResumeText
-        .toLowerCase()
-        .includes(skill.toLowerCase())
-    )
-    .map(skill => skill.toLowerCase())
+  const resumeSkills =
+    resumeSkillsList
+      .filter(skill =>
+        savedResumeText
+          .toLowerCase()
+          .includes(
+            skill.toLowerCase()
+          )
+      )
+      .map(skill =>
+        skill.toLowerCase()
+      )
 
   const userSkills = [
     ...new Set([
@@ -174,32 +224,53 @@ function JobRecommendations() {
       company: 'Tech Solutions',
       location: 'Gurgaon',
       type: 'Full Time',
-      skills: ['JavaScript', 'React', 'Node.js'],
-      applyLink: 'https://www.linkedin.com/jobs/'
+      skills: [
+        'JavaScript',
+        'React',
+        'Node.js'
+      ],
+      applyLink:
+        'https://www.linkedin.com/jobs/'
     },
     {
       title: 'Frontend Developer',
       company: 'Digital Labs',
       location: 'Noida',
       type: 'Full Time',
-      skills: ['HTML', 'CSS', 'JavaScript', 'React'],
-      applyLink: 'https://www.linkedin.com/jobs/'
+      skills: [
+        'HTML',
+        'CSS',
+        'JavaScript',
+        'React'
+      ],
+      applyLink:
+        'https://www.linkedin.com/jobs/'
     },
     {
       title: 'Data Analyst',
       company: 'DataTech',
       location: 'Delhi',
       type: 'Full Time',
-      skills: ['Python', 'SQL', 'Data Science'],
-      applyLink: 'https://www.linkedin.com/jobs/'
+      skills: [
+        'Python',
+        'SQL',
+        'Data Science'
+      ],
+      applyLink:
+        'https://www.linkedin.com/jobs/'
     },
     {
       title: 'Junior Full Stack Developer',
       company: 'WebWorks',
       location: 'Gurgaon',
       type: 'Internship',
-      skills: ['React', 'Node.js', 'MongoDB'],
-      applyLink: 'https://www.linkedin.com/jobs/'
+      skills: [
+        'React',
+        'Node.js',
+        'MongoDB'
+      ],
+      applyLink:
+        'https://www.linkedin.com/jobs/'
     }
   ]
 
@@ -208,19 +279,24 @@ function JobRecommendations() {
       return 0
     }
 
-    const matchedSkills = job.skills.filter(skill =>
-      userSkills.includes(skill.toLowerCase())
-    )
+    const matchedSkills =
+      job.skills.filter(skill =>
+        userSkills.includes(
+          skill.toLowerCase()
+        )
+      )
 
     const skillMatch =
-      (matchedSkills.length / job.skills.length) * 100
-
-    const goal =
       (
-        preferences.jobRole ||
-        profile.careerGoal ||
-        ''
-      ).toLowerCase()
+        matchedSkills.length /
+        job.skills.length
+      ) * 100
+
+    const goal = (
+      preferences.jobRole ||
+      profile.careerGoal ||
+      ''
+    ).toLowerCase()
 
     const jobTitle =
       job.title.toLowerCase()
@@ -254,37 +330,59 @@ function JobRecommendations() {
     )
   }
 
-  const filteredJobs = jobs.filter(job => {
-    const role =
-      preferences.jobRole.trim().toLowerCase()
+  const filteredJobs = jobs.filter(
+    job => {
+      const role =
+        preferences.jobRole
+          .trim()
+          .toLowerCase()
 
-    const location =
-      preferences.location.trim().toLowerCase()
+      const location =
+        preferences.location
+          .trim()
+          .toLowerCase()
 
-    const jobType =
-      preferences.jobType.trim().toLowerCase()
+      const jobType =
+        preferences.jobType
+          .trim()
+          .toLowerCase()
 
-    const roleMatch =
-      !role ||
-      job.title.toLowerCase().includes(role) ||
-      role.includes(job.title.toLowerCase())
+      const roleMatch =
+        !role ||
+        job.title
+          .toLowerCase()
+          .includes(role) ||
+        role.includes(
+          job.title.toLowerCase()
+        )
 
-    const locationMatch =
-      !location ||
-      job.location.toLowerCase() === location
+      const locationMatch =
+        !location ||
+        job.location
+          .toLowerCase() ===
+          location
 
-    const typeMatch =
-      !jobType ||
-      job.type.toLowerCase() === jobType
+      const typeMatch =
+        !jobType ||
+        job.type
+          .toLowerCase() ===
+          jobType
 
-    return roleMatch && locationMatch && typeMatch
-  })
+      return (
+        roleMatch &&
+        locationMatch &&
+        typeMatch
+      )
+    }
+  )
 
   if (loading) {
     return (
       <div className="jobs-page">
         <div className="jobs-container">
-          <h2>Loading Job Recommendations...</h2>
+          <h2>
+            Loading Job Recommendations...
+          </h2>
         </div>
       </div>
     )
@@ -295,6 +393,7 @@ function JobRecommendations() {
       <div className="jobs-container">
 
         <div className="jobs-header">
+
           <p className="jobs-small-heading">
             CAREERPILOT
           </p>
@@ -306,50 +405,68 @@ function JobRecommendations() {
           <p>
             Find jobs that match your skills and career goals.
           </p>
+
         </div>
 
         <div className="job-profile-summary">
 
           <div className="profile-summary-card">
+
             <div className="summary-icon">
               🎯
             </div>
 
             <div>
-              <p>Your Career Goal</p>
+
+              <p>
+                Your Career Goal
+              </p>
 
               <h3>
-                {profile.careerGoal || 'Not added yet'}
+                {profile.careerGoal ||
+                  'Not added yet'}
               </h3>
+
             </div>
+
           </div>
 
           <div className="profile-summary-card">
+
             <div className="summary-icon">
               🛠️
             </div>
 
             <div>
-              <p>Your Skills</p>
+
+              <p>
+                Your Skills
+              </p>
 
               {profile.skills ? (
                 <div className="profile-skill-list">
+
                   {profile.skills
                     .split(',')
-                    .map(skill => skill.trim())
+                    .map(skill =>
+                      skill.trim()
+                    )
                     .filter(Boolean)
                     .map(skill => (
                       <span key={skill}>
                         {skill}
                       </span>
                     ))}
+
                 </div>
               ) : (
                 <h3>
                   Add skills in your profile
                 </h3>
               )}
+
             </div>
+
           </div>
 
         </div>
@@ -357,7 +474,10 @@ function JobRecommendations() {
         <div className="job-preferences-card">
 
           <div className="section-heading">
-            <p>JOB PREFERENCES</p>
+
+            <p>
+              JOB PREFERENCES
+            </p>
 
             <h2>
               Find Your Preferred Jobs
@@ -366,11 +486,13 @@ function JobRecommendations() {
             <span>
               Select your preferred role, location and job type.
             </span>
+
           </div>
 
           <div className="job-preferences-form">
 
             <div>
+
               <label>
                 Job Role
               </label>
@@ -381,14 +503,17 @@ function JobRecommendations() {
                 onChange={e =>
                   setPreferences({
                     ...preferences,
-                    jobRole: e.target.value
+                    jobRole:
+                      e.target.value
                   })
                 }
                 placeholder="e.g. Software Developer"
               />
+
             </div>
 
             <div>
+
               <label>
                 Location
               </label>
@@ -398,26 +523,34 @@ function JobRecommendations() {
                 onChange={e =>
                   setPreferences({
                     ...preferences,
-                    location: e.target.value
+                    location:
+                      e.target.value
                   })
                 }
               >
+
                 <option value="">
                   All Locations
                 </option>
+
                 <option value="Gurgaon">
                   Gurgaon
                 </option>
+
                 <option value="Noida">
                   Noida
                 </option>
+
                 <option value="Delhi">
                   Delhi
                 </option>
+
               </select>
+
             </div>
 
             <div>
+
               <label>
                 Job Type
               </label>
@@ -427,20 +560,26 @@ function JobRecommendations() {
                 onChange={e =>
                   setPreferences({
                     ...preferences,
-                    jobType: e.target.value
+                    jobType:
+                      e.target.value
                   })
                 }
               >
+
                 <option value="">
                   All Types
                 </option>
+
                 <option value="Full Time">
                   Full Time
                 </option>
+
                 <option value="Internship">
                   Internship
                 </option>
+
               </select>
+
             </div>
 
           </div>
@@ -467,6 +606,7 @@ function JobRecommendations() {
         <div className="jobs-section">
 
           <div className="section-heading">
+
             <p>
               CAREER OPPORTUNITIES
             </p>
@@ -478,6 +618,7 @@ function JobRecommendations() {
             <span>
               Jobs selected based on your skills and preferences.
             </span>
+
           </div>
 
           <div className="jobs-grid">
@@ -485,7 +626,8 @@ function JobRecommendations() {
             {filteredJobs.length > 0 ? (
               filteredJobs.map(job => {
 
-                const match = calculateMatch(job)
+                const match =
+                  calculateMatch(job)
 
                 return (
                   <div
@@ -527,11 +669,13 @@ function JobRecommendations() {
 
                     <div className="job-skills">
 
-                      {job.skills.map(skill => (
-                        <span key={skill}>
-                          {skill}
-                        </span>
-                      ))}
+                      {job.skills.map(
+                        skill => (
+                          <span key={skill}>
+                            {skill}
+                          </span>
+                        )
+                      )}
 
                     </div>
 
@@ -549,6 +693,7 @@ function JobRecommendations() {
               })
             ) : (
               <div className="no-jobs">
+
                 <h3>
                   No matching jobs found
                 </h3>
@@ -556,6 +701,7 @@ function JobRecommendations() {
                 <p>
                   Try changing your job preferences.
                 </p>
+
               </div>
             )}
 
