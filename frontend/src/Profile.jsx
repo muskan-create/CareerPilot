@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react'
 import './Profile.css'
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://127.0.0.1:5000'
+
 const emptyProfile = {
   name: '',
   email: '',
@@ -31,7 +33,7 @@ function Profile() {
         }
 
         const response = await fetch(
-          'http://127.0.0.1:5000/api/auth/profile',
+          `${API_URL}/api/auth/profile`,
           {
             headers: {
               Authorization: 'Bearer ' + token
@@ -96,7 +98,7 @@ function Profile() {
       }
 
       const response = await fetch(
-        'http://127.0.0.1:5000/api/auth/profile',
+        `${API_URL}/api/auth/profile`,
         {
           method: 'PUT',
           headers: {
