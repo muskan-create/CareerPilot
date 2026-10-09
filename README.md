@@ -1,4 +1,4 @@
-# CareerPilot 🚀
+# CareerPilot 
 
 ## 🌐 Live Project
 https://career-pilot-mocha-phi.vercel.app/
